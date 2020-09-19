@@ -2,6 +2,182 @@
 Changelog
 ==============================================
 
+v2.9.0 (2020-09-17)
+-------------------
+
+Refer to `v2.9.0 milestone <https://github.com/slackapi/python-slackclient/milestone/17?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [WebClient] #811 Add workflows.* API support - Thanks @misscoded
+2. [WebClient] #810 #809 Only set default filename in files_upload if file is an instance of str - Thanks @csaska
+
+v2.8.2 (2020-09-04)
+-------------------
+
+Refer to `v2.8.2 milestone <https://github.com/slackapi/python-slackclient/milestone/16?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [WebClient] #795 #794 Add admin.conversations.* API methods in WebClient/AsyncWebClient - Thanks @ruberVulpes
+2. [WebClient] #796 Fix a link to the Static options documentation - Thanks @Jamim
+
+v2.8.1 (2020-08-28)
+-------------------
+
+Refer to `v2.8.1 milestone <https://github.com/slackapi/python-slackclient/milestone/15?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [WebClient] #778 #779 Adding support for View objects for views.push/update/publish - Thanks @ruberVulpes
+2. [WebClient] #786 Fix admin.conversations.restrictAccess.* methods to match documentation - Thanks @ruberVulpes
+
+v2.8.0 (2020-08-06)
+-------------------
+
+Refer to `v2.8.0 milestone <https://github.com/slackapi/python-slackclient/milestone/14?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**New Features**
+
+1. [WebClient] #765 #766 Introduce AsyncWebClient/AsyncWebhookClient providing coroutines - Thanks @seratch
+2. [Block Kit] #767 #768 Add "header" block support - Thanks @mwbrooks
+
+**Updates**
+
+1. [WebClient] #738 Add HTTP_PROXY, HTTPS_PROXY env variable support in async WebClient - Thanks @iamtofr @seratch
+2. [WebClient] #769 #773 Enable User-Agent to have additional info part - Thanks @seratch
+3. [WebClient] #770 #771 Fix a bug where ``files.upload``'s file param doesn't accept bytes data - Thanks @seratch
+
+v2.7.3 (2020-07-20)
+-------------------
+
+Refer to `v2.7.3 milestone <https://github.com/slackapi/python-slackclient/milestone/13?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [WebClient] #754 Fix #729 Add admin.conversations.restrictAccess.*, conversations.mark API - Thanks @ruberVulpes @kian2attari
+2. [WebClient] #758 Fix #757 Add admin.usergroups.addTeams, calls.participants.remove API - Thanks @seratch
+3. [WebClient] #727 Fix #645 Unclosed client session - Thanks @NoAnyLove @jourdanrodrigues
+4. [WebClient] #745 Fix #744 a validation logic bug in DatePickerElement - Thanks @dzudi941
+5. [WebClient] #752 Fix #733 Better error handling when getting TimeoutError in RTMClient#start() - Thanks @liorblob @seratch
+6. [WebClient] #751 Fix #718 by handling unexpected response body format - Thanks @jeffbuswell @seratch
+
+v2.7.2 (2020-06-23)
+-------------------
+
+Refer to `v2.7.2 milestone <https://github.com/slackapi/python-slackclient/milestone/12?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [WebClient] Fix #728 by adding bytearray support in files_upload (sync mode) - Thanks @sofya-salmanova @seratch
+2. [WebClient] #726 Fix InputBlock.hint validation failure - Thanks @jourdanrodrigues
+3. [WebClient] #723 Correct the default value of InputBlock.label, hint - Thanks @jourdanrodrigues
+
+v2.7.1 (2020-06-04)
+-------------------
+
+This release includes the fixes for regression bugs in `WebClient` since v2.6.0. Refer to `v2.7.1 milestone <https://github.com/slackapi/python-slackclient/milestone/11?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [WebClient] #716 #712 Support timeout in sync sync web clients - Thanks @DanialErfanian @seratch
+2. [WebClient] #713 Support custom SSL context in sync sync web clients - Thanks @austinbutler
+3. [WebClient] #715 #714 Support proxy in sync sync web clients - Thanks @austinbutler @seratch
+
+v2.7.0 (2020-06-02)
+-------------------
+
+Refer to `v2.7.0 milestone <https://github.com/slackapi/python-slackclient/milestone/6?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**New Features**
+
+1. [WebhookClient] #707 #270 #531 Add `WebhookClient` for Incoming Webhooks & response_url - Thanks @seratch @chubz @Ambro17
+
+**Updates**
+
+1. [WebClient] #704 #695 Add `calls_*` methods to `WebClient` and `CallBlock` in Block Kit classes - Thanks @seratch
+2. [WebClient] #710 #536 Allow Tokens to be specified per request - Thanks @seratch
+3. [WebClient] #709 #708 Add default_to_current_conversation in conversations_select elements - Thanks @seratch
+
+v2.6.2 (2020-05-28)
+-------------------
+
+Refer to `v2.6.2 milestone <https://github.com/slackapi/python-slackclient/milestone/9?closed=1>`_ to know the complete details of this release.
+
+**Updates**
+
+1. [WebClient] #705 WebClient's paginated API calls may fail with no params - Thanks @seratch
+
+v2.6.1 (2020-05-24)
+-------------------
+
+This patch release is a quick fix for #701, a major issue that affected RTMClient users in v2.6.0. The malfunction was introduced by #667 trying to address #558 #619. Those issues were reopened and will be resolved by another approach. Refer to `v2.6.1 milestone <https://github.com/slackapi/python-slackclient/milestone/8>`_ to know the complete list of the issues resolved by this release.
+
+**Updates**
+
+1. [RTMClient] #701 RTMClient drops some messages when they come in rapid succession - Thanks @pbrackin @seratch
+
+v2.6.0 (2020-05-21)
+-------------------
+
+Refer to `v2.6.0 milestone <https://github.com/slackapi/python-slackclient/milestone/5?closed=1>`_ to know the complete list of the issues resolved by this release.
+
+**New Features**
+
+1. [Block Kit] #659 Add complete supports for Block Kit components and fixed a few existing bugs as well (#500 #519 #623 #632 #635 #639 #676 #699) - Thanks @seratch @diurnalist @ruberVulpes @jeremyschulman @e271828- @RodneyU215
+2. [Signature] #686 Add slack.signature.SignatureVerifier for request verification - Thanks @seratch
+3. [WebClient] #682 Add missing Grid admin APIs (`admin.usergroups.*`, `admin.users.*`, `admin.apps.*`) - Thanks @stevengill @seratch
+
+**Updates**
+
+1. [WebClient][RTMClient] Fixed a bunch of the currency issues this SDK had (#429 #463 #492 #497 #530 #569 #605 #613 #626 #630 #631 #633 #669) - Thanks @seratch @aaguilartablada @aoberoi @stevengill @marshallino16
+2. [WebClient] #681 #560 Enable using bool values for request parameters - Thanks @roman-kachanovsky @seratch
+3. [WebClient] #661 #678 Improve handling of required "ids" parameters (e.g., channel_ids, users) - Thanks @seratch
+4. [WebClient] #680 Add non-conversation API deprecation warnings - Thanks @seratch
+5. [WebClient] #671 #670 Enable passing None values for request parameters (they used to result in errors) - Thanks @yuji38kwmt @seratch
+6. [WebClient] #673 Fix #672 files.upload fails with a filepath containing multi byte chars - Thanks @yuji38kwmt @seratch
+7. [WebClient] #656 Fix #594 preview_image for files.remote.add API method is not properly supported - Thanks @Eothred @seratch
+8. [Maintenance] #618 Add py.typed file to package distribution - Thanks @JKillian
+9. [WebClient] #599 Strip token string parameters of whitespace - Thanks @TheFrozenFire
+10. [WebClient] #692 Fix superfluous_charset warnings since v2.4.0 - Thanks @seratch
+11. [WebClient] #652 Update oauth_v2_access to include redirect_uri (as optional) - Thanks @tomasreimers
+
+v2.5.0 (2019-12-09)
+-------------------
+**New Features**
+
+1. [WebClient] Adding new oauth.v2.access Web API method. #577
+
+v2.4.0 (2019-11-27)
+-------------------
+**New Features**
+
+1. [WebClient] Adding new admin.* Web API methods. #571
+
+**Updates**
+1. [WebClient] We're no longer validating token types for Web API methods. Improves compatibility with granular bot permissions. #568 (Thanks @Smotko)
+2. [WebClient] Correcting typos in descriptions #554 (Thanks @phamk)
+3. [WebClient] Fixed 'iteracting' typo in library file headers #564 (Thanks @acabey)
+4. [Message Builders] Remove value from LinkButtonElement #563 (Thanks @pedroma)
+
+v2.3.1 (2019-10-29)
+-------------------
+**Updates**
+
+1. [WebClient] Fixing a regression that causes the client to close sessions prematurely. #544 (Thanks @fatih-acar!) 
+2. [WebClient] Adding required missing `view` param to views.update Web API method. #542
+
+v2.3.0 (2019-10-22)
+-------------------
+**New Features**
+
+1. [WebClient] Adding new views.publish Web API method. #540
+
+**Updates**
+
+1. [WebClient] Some server responses don't return json. Correcting initial assumption. #540
+2. [Maintenance] Add `py.typed` to mark the library to support type hinting #524s
+
 v2.2.1 (2019-10-08)
 -------------------
 **Updates**

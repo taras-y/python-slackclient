@@ -14,7 +14,7 @@
 |product_name|
 ==============================================
 Slack's APIs allow anyone to build full featured integrations that extend
-and expand the capabilites of your Slack workspace. These APIs allow you
+and expand the capabilities of your Slack workspace. These APIs allow you
 to build applications that interact with Slack just like the people on your
 team -- they can post messages, respond to events that happen -- as well
 as build complex UIs for getting work done.
@@ -48,7 +48,30 @@ Of course, you can always pull the source code directly into your project:
 .. code-block:: bash
 
 	git clone https://github.com/slackapi/python-slackclient.git
-	pip install -r requirements.txt
+
+And then, save a few lines of code as ``./test.py``.
+
+.. code-block:: python
+
+    # test.py
+    import sys
+    # Load the local source directly
+    sys.path.insert(1, "./python-slackclient")
+    # Enable debug logging
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    # Verify it works
+    from slack import WebClient
+    client = WebClient()
+    api_response = client.api_test()
+
+You can run the code this way.
+
+.. code-block:: bash
+
+	python test.py
+
+It's also good to try on the Python REPL.
 
 Getting Help
 ************
@@ -56,6 +79,6 @@ Getting Help
 If you get stuck, we’re here to help. The following are the best ways to get assistance working through your issue:
 
 - Use our `Github Issue Tracker <https://github.com/slackapi/python-slackclient/issues>`_ for reporting bugs or requesting features.
-- Visit the `Slack Developer Community <http://community.slack.com>`_ for getting help using |product_name| or just generally bond with your fellow Slack developers.
+- Visit the `Slack Developer Community <http://slackcommunity.com>`_ for getting help using |product_name| or just generally bond with your fellow Slack developers.
 
 .. include:: metadata.rst

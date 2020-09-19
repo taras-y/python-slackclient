@@ -1,14 +1,13 @@
-"""A Python module for iteracting and consuming responses from Slack."""
+"""A Python module for interacting and consuming responses from Slack."""
 
-# Standard Imports
-import logging
 import asyncio
+import logging
 
-# Internal Imports
 import slack.errors as e
+from slack.web.internal_utils import _next_cursor_is_present
 
 
-class SlackResponse(object):
+class SlackResponse:
     """An iterable container of response data.
 
     Attributes:
@@ -63,6 +62,7 @@ class SlackResponse(object):
         data: dict,
         headers: dict,
         status_code: int,
+        use_sync_aiohttp: bool = True,  # True for backward-compatibility
     ):
         self.http_verb = http_verb
         self.api_url = api_url
@@ -71,7 +71,9 @@ class SlackResponse(object):
         self.headers = headers
         self.status_code = status_code
         self._initial_data = data
+        self._iteration = None  # for __iter__ & __next__
         self._client = client
+        self._use_sync_aiohttp = use_sync_aiohttp
         self._logger = logging.getLogger(__name__)
 
     def __str__(self):
@@ -79,7 +81,7 @@ class SlackResponse(object):
         return f"{self.data}"
 
     def __getitem__(self, key):
-        """Retreives any key from the data store.
+        """Retrieves any key from the data store.
 
         Note:
             This is implemented so users can reference the
@@ -106,7 +108,7 @@ class SlackResponse(object):
         return self
 
     def __next__(self):
-        """Retreives the next portion of results, if 'next_cursor' is present.
+        """Retrieves the next portion of results, if 'next_cursor' is present.
 
         Note:
             Some responses return collections of information
@@ -127,18 +129,28 @@ class SlackResponse(object):
         self._iteration += 1
         if self._iteration == 1:
             return self
-        if self._next_cursor_is_present(self.data):
-            self.req_args.get("params", {}).update(
-                {"cursor": self.data["response_metadata"]["next_cursor"]}
-            )
+        if _next_cursor_is_present(self.data):  # skipcq: PYL-R1705
+            params = self.req_args.get("params", {})
+            if params is None:
+                params = {}
+            params.update({"cursor": self.data["response_metadata"]["next_cursor"]})
+            self.req_args.update({"params": params})
 
-            response = asyncio.get_event_loop().run_until_complete(
-                self._client._request(
-                    http_verb=self.http_verb,
-                    api_url=self.api_url,
-                    req_args=self.req_args,
+            if self._use_sync_aiohttp:
+                # We no longer recommend going with this way
+                response = asyncio.get_event_loop().run_until_complete(
+                    self._client._request(  # skipcq: PYL-W0212
+                        http_verb=self.http_verb,
+                        api_url=self.api_url,
+                        req_args=self.req_args,
+                    )
                 )
-            )
+            else:
+                # This method sends a request in a synchronous way
+                response = self._client._request_for_pagination(  # skipcq: PYL-W0212
+                    api_url=self.api_url, req_args=self.req_args
+                )
+
             self.data = response["data"]
             self.headers = response["headers"]
             self.status_code = response["status_code"]
@@ -147,7 +159,7 @@ class SlackResponse(object):
             raise StopIteration
 
     def get(self, key, default=None):
-        """Retreives any key from the response data.
+        """Retrieves any key from the response data.
 
         Note:
             This is implemented so users can reference the
@@ -169,23 +181,14 @@ class SlackResponse(object):
         Raises:
             SlackApiError: The request to the Slack API failed.
         """
-        if self.status_code == 200 and self.data.get("ok", False):
-            self._logger.debug("Received the following response: %s", self.data)
+        if self._logger.level <= logging.DEBUG:
+            self._logger.debug(
+                "Received the following response - "
+                f"status: {self.status_code}, "
+                f"headers: {dict(self.headers)}, "
+                f"body: {self.data}"
+            )
+        if self.status_code == 200 and self.data and self.data.get("ok", False):
             return self
         msg = "The request to the Slack API failed."
         raise e.SlackApiError(message=msg, response=self)
-
-    @staticmethod
-    def _next_cursor_is_present(data):
-        """Determine if the response contains 'next_cursor'
-        and 'next_cursor' is not empty.
-
-        Returns:
-            A boolean value.
-        """
-        present = (
-            "response_metadata" in data
-            and "next_cursor" in data["response_metadata"]
-            and data["response_metadata"]["next_cursor"] != ""
-        )
-        return present

@@ -16,16 +16,24 @@ One of the primary uses of Slack is posting messages to a channel using the chan
 
 .. code-block:: python
 
+  import logging
+  logging.basicConfig(level=logging.DEBUG)
+
   import os
-  import slack
+  from slack import WebClient
+  from slack.errors import SlackApiError
 
   slack_token = os.environ["SLACK_API_TOKEN"]
-  client = slack.WebClient(token=slack_token)
+  client = WebClient(token=slack_token)
 
-  client.chat_postMessage(
-    channel="C0XXXXXX",
-    text="Hello from your app! :tada:"
-  )
+  try:
+    response = client.chat_postMessage(
+      channel="C0XXXXXX",
+      text="Hello from your app! :tada:"
+    )
+  except SlackApiError as e:
+    # You will get a SlackApiError if "ok" is False
+    assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
 
 Sending an ephemeral message, which is only visible to an assigned user in a specified channel, is nearly the same
 as sending a regular message, but with an additional ``user`` parameter.
@@ -33,12 +41,12 @@ as sending a regular message, but with an additional ``user`` parameter.
 .. code-block:: python
 
   import os
-  import slack
+  from slack import WebClient
 
   slack_token = os.environ["SLACK_API_TOKEN"]
-  client = slack.WebClient(token=slack_token)
+  client = WebClient(token=slack_token)
 
-  client.chat_postEphemeral(
+  response = client.chat_postEphemeral(
     channel="C0XXXXXX",
     text="Hello silently from your app! :tada:",
     user="U0XXXXXXX"
@@ -62,33 +70,33 @@ To send a message to a channel, use the channel's ID. For IMs, use the user's ID
     channel="C0XXXXXX",
     blocks=[
       {
-          "type": "section",
-          "text": {
-              "type": "mrkdwn",
-              "text": "Danny Torrence left the following review for your property:"
-          }
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "Danny Torrence left the following review for your property:"
+        }
       },
       {
-          "type": "section",
-          "text": {
-              "type": "mrkdwn",
-              "text": "<https://example.com|Overlook Hotel> \n :star: \n Doors had too many axe holes, guest in room " +
-              "237 was far too rowdy, whole place felt stuck in the 1920s."
-          },
-          "accessory": {
-              "type": "image",
-              "image_url": "https://images.pexels.com/photos/750319/pexels-photo-750319.jpeg",
-              "alt_text": "Haunted hotel image"
-          }
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "<https://example.com|Overlook Hotel> \n :star: \n Doors had too many axe holes, guest in room " +
+            "237 was far too rowdy, whole place felt stuck in the 1920s."
+        },
+        "accessory": {
+          "type": "image",
+          "image_url": "https://images.pexels.com/photos/750319/pexels-photo-750319.jpeg",
+          "alt_text": "Haunted hotel image"
+        }
       },
       {
-          "type": "section",
-          "fields": [
-              {
-                  "type": "mrkdwn",
-                  "text": "*Average Rating*\n1.0"
-              }
-          ]
+        "type": "section",
+        "fields": [
+          {
+            "type": "mrkdwn",
+            "text": "*Average Rating*\n1.0"
+          }
+        ]
       }
     ]
   )
@@ -105,20 +113,20 @@ A channel or DM conversation is a nearly linear timeline of messages exchanged b
 
 .. code-block:: python
 
-  client.chat_postMessage(
-      channel="C0XXXXXX",
-      text="Hello from your app! :tada:",
-      thread_ts="1476746830.000003"
+  response = client.chat_postMessage(
+    channel="C0XXXXXX",
+    thread_ts="1476746830.000003",
+    text="Hello from your app! :tada:"
   )
 
 By default, ``reply_broadcast`` is set to ``False``. To indicate your reply is germane to all members of a channel, and therefore a notification of the reply should be posted in-channel, set the ``reply_broadcast`` to ``True``.
 
 .. code-block:: python
 
-  client.chat_postMessage(
+  response = client.chat_postMessage(
     channel="C0XXXXXX",
-    text="Hello from your app! :tada:",
     thread_ts="1476746830.000003",
+    text="Hello from your app! :tada:",
     reply_broadcast=True
   )
 
@@ -138,9 +146,9 @@ Let's say you have a bot which posts the status of a request. When that request 
 
 .. code-block:: python
 
-  client.chat_update(
-    ts="1476746830.000003",
+  response = client.chat_update(
     channel="C0XXXXXX",
+    ts="1476746830.000003",
     text="updates from your app! :tada:"
   )
 
@@ -154,7 +162,7 @@ Sometimes you need to delete things.
 
 .. code-block:: python
 
-  client.chat_delete(
+  response = client.chat_delete(
     channel="C0XXXXXX",
     ts="1476745373.000002"
   )
@@ -171,56 +179,125 @@ Modals use the same blocks that compose messages with the addition of an `input`
 
 .. code-block:: python
 
-  client.views_open(
-    trigger_id="3213746830.000023",
-    view={
-      type: "modal",
-      callback_id: "view_identifier",
-      title: {
-        type: "plain_text",
-        text: "Modal title"
-      },
-      blocks: [
-        {
-          type: "input",
-          label: {
-            type: "plain_text",
-            text: "Input label"
-          },
-          element: {
-            type: "plain_text_input",
-            action_id: "value_indentifier"
-          }
-        }
-      ]
-    }
-  )
+  # This module is available since v2.6
+  from slack.signature import SignatureVerifier
+  signature_verifier = SignatureVerifier(os.environ["SLACK_SIGNING_SECRET"])
+
+  from flask import Flask, request, make_response
+  app = Flask(__name__)
+
+  @app.route("/slack/events", methods=["POST"])
+  def slack_app():
+    if not signature_verifier.is_valid_request(request.get_data(), request.headers):
+      return make_response("invalid request", 403)
+
+    if "payload" in request.form:
+      payload = json.loads(request.form["payload"])
+
+      if payload["type"] == "shortcut" \
+        and payload["callback_id"] == "open-modal-shortcut":
+        # Open a new modal by a global shortcut
+        try:
+          api_response = client.views_open(
+            trigger_id=payload["trigger_id"],
+            view={
+              "type": "modal",
+              "callback_id": "modal-id",
+              "title": {
+                "type": "plain_text",
+                "text": "Awesome Modal"
+              },
+              "submit": {
+                "type": "plain_text",
+                "text": "Submit"
+              },
+              "close": {
+                "type": "plain_text",
+                "text": "Cancel"
+              },
+              "blocks": [
+                {
+                  "type": "input",
+                  "block_id": "b-id",
+                  "label": {
+                    "type": "plain_text",
+                    "text": "Input label",
+                  },
+                  "element": {
+                    "action_id": "a-id",
+                    "type": "plain_text_input",
+                  }
+                }
+              ]
+            }
+          )
+          return make_response("", 200)
+        except SlackApiError as e:
+          code = e.response["error"]
+          return make_response(f"Failed to open a modal due to {code}", 200)
+
+      if payload["type"] == "view_submission" \
+        and payload["view"]["callback_id"] == "modal-id":
+        # Handle a data submission request from the modal
+        submitted_data = payload["view"]["state"]["values"]
+        print(submitted_data)  # {'b-id': {'a-id': {'type': 'plain_text_input', 'value': 'your input'}}}
+        return make_response("", 200)
+
+    return make_response("", 404)
+
+  if __name__ == "__main__":
+    # export SLACK_SIGNING_SECRET=***
+    # export SLACK_API_TOKEN=xoxb-***
+    # export FLASK_ENV=development
+    # python3 app.py
+    app.run("localhost", 3000)
 
 See `views.open <https://api.slack.com/methods/views.open>`_ more details and additional parameters.
+
+Also, to run the above example, the following `Slack app configurations <https://api.slack.com/apps>`_ are required.
+
+* Enable **Interactivity** with a valid Request URL: ``https://{your-public-domain}/slack/events``
+* Add a global shortcut with the Callback ID: ``open-modal-shortcut``
 
 --------
 
 Updating and pushing modals
--------------------
+------------------------------
 You can dynamically update a view inside of a modal by calling `views.update` and passing the view ID returned in the previous `views.open` call.
 
 .. code-block:: python
 
-  client.views_update(
-    view_id="V123401"
+  private_metadata = "any str data you want to store"
+  response = client.views_update(
+    view_id=payload["view"]["id"],
+    hash=payload["view"]["hash"],
     view={
-      type: "modal",
-      callback_id: "view_identifier",
-      title: {
-        type: "plain_text",
-        text: "Modal title"
+      "type": "modal",
+      "callback_id": "modal-id",
+      "private_metadata": private_metadata,
+      "title": {
+        "type": "plain_text",
+        "text": "Awesome Modal"
       },
-      blocks: [
+      "submit": {
+        "type": "plain_text",
+        "text": "Submit"
+      },
+      "close": {
+        "type": "plain_text",
+        "text": "Cancel"
+      },
+      "blocks": [
         {
-          type: "section",
-          text: {
-            type: "plain_text",
-            text: "An updated modal, indeed"
+          "type": "input",
+          "block_id": "b-id",
+          "label": {
+            "type": "plain_text",
+            "text": "Input label",
+          },
+          "element": {
+            "action_id": "a-id",
+            "type": "plain_text_input",
           }
         }
       ]
@@ -241,7 +318,7 @@ This method adds a reaction (emoji) to an item (``file``, ``file comment``, ``ch
 
 .. code-block:: python
 
-  client.reactions_add(
+  response = client.reactions_add(
     channel="C0XXXXXXX",
     name="thumbsup",
     timestamp="1234567890.123456"
@@ -251,7 +328,7 @@ Removing an emoji reaction is basically the same format, but you'll use ``reacti
 
 .. code-block:: python
 
-  client.reactions_remove(
+  response = client.reactions_remove(
     channel="C0XXXXXXX",
     name="thumbsup",
     timestamp="1234567890.123456"
@@ -262,23 +339,21 @@ See `reactions.add <https://api.slack.com/methods/reactions.add>`_ and `reaction
 
 --------
 
-Listing channels
+Listing public channels
 ---------------------------
 At some point, you'll want to find out what channels are available to your app. This is how you get that list.
 
 .. code-block:: python
 
-  client.channels_list()
+  response = client.conversations_list(types="public_channel")
 
 Archived channels are included by default. You can exclude them by passing ``exclude_archived=1`` to your request.
 
 .. code-block:: python
 
-  client.channels_list(
-    exclude_archived=1
-  )
+  response = client.conversations_list(exclude_archived=1)
 
-See `channels.list <https://api.slack.com/methods/channels.list>`_ for more info.
+See `conversations.list <https://api.slack.com/methods/conversations.list>`_ for more info.
 
 --------
 
@@ -288,11 +363,9 @@ Once you have the ID for a specific channel, you can fetch information about tha
 
 .. code-block:: python
 
-  client.channels_info(,
-    channel="C0XXXXXXX"
-  )
+  response = client.conversations_info(channel="C0XXXXXXX")
 
-See `channels.info <https://api.slack.com/methods/channels.info>`_ for more info.
+See `conversations.info <https://api.slack.com/methods/conversations.info>`_ for more info.
 
 --------
 
@@ -302,14 +375,12 @@ Channels are the social hub of most Slack teams. Here's how you hop into one:
 
 .. code-block:: python
 
-  client.channels_join(
-    channel="C0XXXXXXY"
-  )
+  response = client.conversations_join(channel="C0XXXXXXY")
 
 If you are already in the channel, the response is slightly different.
 ``already_in_channel`` will be true, and a limited ``channel`` object will be returned. Bot users cannot join a channel on their own, they need to be invited by another user.
 
-See `channels.join <https://api.slack.com/methods/channels.join>`_ for more info.
+See `conversations.join <https://api.slack.com/methods/conversations.join>`_ for more info.
 
 --------
 
@@ -320,11 +391,9 @@ joined one by accident. This is how you leave a channel.
 
 .. code-block:: python
 
-  client.channels_leave(
-    channel="C0XXXXXXX"
-  )
+  response = client.conversations_leave(channel="C0XXXXXXX")
 
-See `channels.leave <https://api.slack.com/methods/channels.leave>`_ for more info.
+See `conversations.leave <https://api.slack.com/methods/conversations.leave>`_ for more info.
 
 --------
 
@@ -333,7 +402,9 @@ Listing team members
 
 .. code-block:: python
 
-  client.users_list()
+  response = client.users_list()
+  users = response["members"]
+  user_ids = list(map(lambda u: u["id"], users))
 
 See `users.list <https://api.slack.com/methods/users.list>`_ for more info.
 
@@ -345,13 +416,32 @@ Uploading files
 
 .. code-block:: python
 
-  client.files_upload(
+  response = client.files_upload(
     channels="C3UKJTQAC",
     file="files.pdf",
     title="Test upload"
   )
 
 See `files.upload <https://api.slack.com/methods/files.upload>`_ for more info.
+
+--------
+
+Calling any API methods
+--------------------------
+
+This library covers all the public endpoints as the methods in ``WebClient``. That said, you may see a bit delay of the library release. When you're in a hurry, you can directly use ``api_call`` method as below.
+
+.. code-block:: python
+
+  import os
+  from slack import WebClient
+
+  client = WebClient(token=os.environ['SLACK_API_TOKEN'])
+  response = client.api_call(
+    api_method='chat.postMessage',
+    json={'channel': '#random','text': "Hello world!"}
+  )
+  assert response["message"]["text"] == "Hello world!"
 
 
 --------
@@ -366,11 +456,12 @@ Here's a very basic example of how one might deal with rate limited requests.
 
 .. code-block:: python
 
-  import slack
+  import os
   import time
+  from slack import WebClient
+  from slack.errors import SlackApiError
 
-  slack_token = os.environ["SLACK_API_TOKEN"]
-  client = slack.WebClient(token=slack_token)
+  client = WebClient(token=os.environ["SLACK_API_TOKEN"])
 
   # Simple wrapper for sending a Slack message
   def send_slack_message(channel, message):
@@ -380,19 +471,22 @@ Here's a very basic example of how one might deal with rate limited requests.
     )
 
   # Make the API call and save results to `response`
-  response = send_slack_message("C0XXXXXX", "Hello, from Python!")
-
-  # Check to see if the message sent successfully.
-  # If the message succeeded, `response["ok"]`` will be `True`
-  if response["ok"]:
-    print(f"Message posted successfully: {response["message"]["ts"]}")
-    # If the message failed, check for rate limit headers in the response
-  elif response["ok"] is False and response["headers"]["Retry-After"]:
-    # The `Retry-After` header will tell you how long to wait before retrying
-    delay = int(response["headers"]["Retry-After"])
-    print("Rate limited. Retrying in " + str(delay) + " seconds")
-    time.sleep(delay)
-    send_slack_message(message, channel)
+  channel = "#random"
+  message = "Hello, from Python!"
+  # Do until being rate limited
+  while True:
+    try:
+      response = send_slack_message(channel, message)
+    except SlackApiError as e:
+      if e.response["error"] == "ratelimited":
+        # The `Retry-After` header will tell you how long to wait before retrying
+        delay = int(e.response.headers['Retry-After'])
+        print(f"Rate limited. Retrying in {delay} seconds")
+        time.sleep(delay)
+        response = send_slack_message(channel, message)
+      else:
+        # other errors
+        raise e
 
 See the documentation on `Rate Limiting <https://api.slack.com/docs/rate-limits>`_ for more info.
 
