@@ -8,7 +8,7 @@ import io
 import json
 import logging
 import mimetypes
-import re
+import urllib
 import uuid
 import warnings
 from http.client import HTTPResponse
@@ -17,7 +17,7 @@ from typing import BinaryIO, Dict, List
 from typing import Optional, Union
 from urllib.error import HTTPError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, OpenerDirector, ProxyHandler, HTTPSHandler
 
 import aiohttp
 from aiohttp import FormData, BasicAuth
@@ -37,7 +37,7 @@ from slack.web.slack_response import SlackResponse
 
 
 class BaseClient:
-    BASE_URL = "https://www.slack.com/api/"
+    BASE_URL = "https://slack.com/api/"
 
     def __init__(
         self,
@@ -63,9 +63,7 @@ class BaseClient:
         self.use_sync_aiohttp = use_sync_aiohttp
         self.session = session
         self.headers = headers or {}
-        self.headers["User-Agent"] = get_user_agent(
-            user_agent_prefix, user_agent_suffix
-        )
+        self.headers["User-Agent"] = get_user_agent(user_agent_prefix, user_agent_suffix)
         self._logger = logging.getLogger(__name__)
         self._event_loop = loop
 
@@ -153,9 +151,7 @@ class BaseClient:
     # aiohttp based async WebClient
     # =================================================================
 
-    async def _send(
-        self, http_verb: str, api_url: str, req_args: dict
-    ) -> SlackResponse:
+    async def _send(self, http_verb: str, api_url: str, req_args: dict) -> SlackResponse:
         """Sends the request out for transmission.
 
         Args:
@@ -178,9 +174,7 @@ class BaseClient:
                 # True/False -> "1"/"0"
                 req_args["params"] = convert_bool_to_0_or_1(req_args["params"])
 
-            res = await self._request(
-                http_verb=http_verb, api_url=api_url, req_args=req_args
-            )
+            res = await self._request(http_verb=http_verb, api_url=api_url, req_args=req_args)
         finally:
             for f in open_files:
                 f.close()
@@ -219,18 +213,14 @@ class BaseClient:
         _json = req_args["json"] if "json" in req_args else None
         headers = req_args["headers"] if "headers" in req_args else None
         token = params.get("token") if params and "token" in params else None
-        auth = (
-            req_args["auth"] if "auth" in req_args else None
-        )  # Basic Auth for oauth.v2.access / oauth.access
+        auth = req_args["auth"] if "auth" in req_args else None  # Basic Auth for oauth.v2.access / oauth.access
         if auth is not None:
             if isinstance(auth, BasicAuth):
                 headers["Authorization"] = auth.encode()
             elif isinstance(auth, str):
                 headers["Authorization"] = auth
             else:
-                self._logger.warning(
-                    f"As the auth: {auth}: {type(auth)} is unsupported, skipped"
-                )
+                self._logger.warning(f"As the auth: {auth}: {type(auth)} is unsupported, skipped")
 
         body_params = {}
         if params:
@@ -274,19 +264,6 @@ class BaseClient:
         files: Dict[str, io.BytesIO] = {},
         additional_headers: Dict[str, str] = {},
     ) -> SlackResponse:
-        """Performs a Slack API request and returns the result.
-
-        :param token: Slack API Token (either bot token or user token)
-        :param url: a complete URL (e.g., https://www.slack.com/api/chat.postMessage)
-        :param query_params: query string
-        :param json_body: json data structure (it's still a dict at this point),
-            if you give this argument, body_params and files will be skipped
-        :param body_params: form params
-        :param files: files to upload
-        :param additional_headers: request headers to append
-        :return: API response
-        """
-
         files_to_close: List[BinaryIO] = []
         try:
             # True/False -> "1"/"0"
@@ -298,15 +275,9 @@ class BaseClient:
                 def convert_params(values: dict) -> dict:
                     if not values or not isinstance(values, dict):
                         return {}
-                    return {
-                        k: ("(bytes)" if isinstance(v, bytes) else v)
-                        for k, v in values.items()
-                    }
+                    return {k: ("(bytes)" if isinstance(v, bytes) else v) for k, v in values.items()}
 
-                headers = {
-                    k: "(redacted)" if k.lower() == "authorization" else v
-                    for k, v in additional_headers.items()
-                }
+                headers = {k: "(redacted)" if k.lower() == "authorization" else v for k, v in additional_headers.items()}
                 self._logger.debug(
                     f"Sending a request - url: {url}, "
                     f"query_params: {convert_params(query_params)}, "
@@ -350,7 +321,7 @@ class BaseClient:
                 url = f"{url}&{q}" if "?" in url else f"{url}?{q}"
 
             response = self._perform_urllib_http_request(url=url, args=request_args)
-            if response.get("body", None):
+            if response.get("body"):
                 try:
                     response_body_data: dict = json.loads(response["body"])
                 except json.decoder.JSONDecodeError as e:
@@ -381,19 +352,7 @@ class BaseClient:
                 if not f.closed:
                     f.close()
 
-    def _perform_urllib_http_request(
-        self, *, url: str, args: Dict[str, Dict[str, any]]
-    ) -> Dict[str, any]:
-        """Performs an HTTP request and parses the response.
-
-        :param url: a complete URL (e.g., https://www.slack.com/api/chat.postMessage)
-        :param args: args has "headers", "data", "params", and "json"
-            "headers": Dict[str, str]
-            "data": Dict[str, any]
-            "params": Dict[str, str],
-            "json": Dict[str, any],
-        :return: dict {status: int, headers: Headers, body: str}
-        """
+    def _perform_urllib_http_request(self, *, url: str, args: Dict[str, Dict[str, any]]) -> Dict[str, any]:
         headers = args["headers"]
         if args["json"]:
             body = json.dumps(args["json"])
@@ -410,16 +369,10 @@ class BaseClient:
                     filename = "Uploaded file"
                     name_attr = getattr(value, "name", None)
                     if name_attr:
-                        filename = (
-                            name_attr.decode("utf-8")
-                            if isinstance(name_attr, bytes)
-                            else name_attr
-                        )
+                        filename = name_attr.decode("utf-8") if isinstance(name_attr, bytes) else name_attr
                     if "filename" in data:
                         filename = data["filename"]
-                    mimetype = (
-                        mimetypes.guess_type(filename)[0] or "application/octet-stream"
-                    )
+                    mimetype = mimetypes.guess_type(filename)[0] or "application/octet-stream"
                     title = (
                         f'\r\nContent-Disposition: form-data; name="{key}"; filename="{filename}"\r\n'
                         + f"Content-Type: {mimetype}\r\n"
@@ -455,21 +408,23 @@ class BaseClient:
             # (BAN-B310)
             if url.lower().startswith("http"):
                 req = Request(method="POST", url=url, data=body, headers=headers)
+                opener: Optional[OpenerDirector] = None
                 if self.proxy is not None:
                     if isinstance(self.proxy, str):
-                        host = re.sub("^https?://", "", self.proxy)
-                        req.set_proxy(host, "http")
-                        req.set_proxy(host, "https")
-                    else:
-                        raise SlackRequestError(
-                            f"Invalid proxy detected: {self.proxy} must be a str value"
+                        opener = urllib.request.build_opener(
+                            ProxyHandler({"http": self.proxy, "https": self.proxy}),
+                            HTTPSHandler(context=self.ssl),
                         )
+                    else:
+                        raise SlackRequestError(f"Invalid proxy detected: {self.proxy} must be a str value")
 
                 # NOTE: BAN-B310 is already checked above
-                resp: HTTPResponse = urlopen(  # skipcq: BAN-B310
-                    req, context=self.ssl, timeout=self.timeout
-                )
-                charset = resp.headers.get_content_charset()
+                resp: Optional[HTTPResponse] = None
+                if opener:
+                    resp = opener.open(req, timeout=self.timeout)  # skipcq: BAN-B310
+                else:
+                    resp = urlopen(req, context=self.ssl, timeout=self.timeout)  # skipcq: BAN-B310
+                charset = resp.headers.get_content_charset() or "utf-8"
                 body: str = resp.read().decode(charset)  # read the response body here
                 return {"status": resp.code, "headers": resp.headers, "body": body}
             raise SlackRequestError(f"Invalid URL detected: {url}")
@@ -479,7 +434,7 @@ class BaseClient:
                 # for compatibility with aiohttp
                 resp["headers"]["Retry-After"] = resp["headers"]["retry-after"]
 
-            charset = e.headers.get_content_charset()
+            charset = e.headers.get_content_charset() or "utf-8"
             body: str = e.read().decode(charset)  # read the response body here
             resp["body"] = body
             return resp
@@ -507,9 +462,7 @@ class BaseClient:
     # =================================================================
 
     @staticmethod
-    def validate_slack_signature(
-        *, signing_secret: str, data: str, timestamp: str, signature: str
-    ) -> bool:
+    def validate_slack_signature(*, signing_secret: str, data: str, timestamp: str, signature: str) -> bool:
         """
         Slack creates a unique string for your app and shares it with you. Verify
         requests from Slack with confidence by verifying signatures using your

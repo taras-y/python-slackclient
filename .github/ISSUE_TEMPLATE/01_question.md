@@ -1,5 +1,5 @@
 ---
-name: Question
+name: SDK Question
 about: Submit a question about this SDK
 title: (Set a clear title describing your question)
 labels: "untriaged"
@@ -48,4 +48,4 @@ sw_vers && uname -v # or `ver`
 
 For general questions/issues about Slack API platform or its server-side, could you submit questions at https://my.slack.com/help/requests/new instead. :bow:
 
-Please read the [Contributing guidelines](https://github.com/slackapi/python-slackclient/blob/main/.github/contributing.md) and [Code of Conduct](https://slackhq.github.io/code-of-conduct) before creating this issue or pull request. By submitting, you are agreeing to those rules.
+Please read the [Contributing guidelines](https://github.com/slackapi/python-slack-sdk/blob/main/.github/contributing.md) and [Code of Conduct](https://slackhq.github.io/code-of-conduct) before creating this issue or pull request. By submitting, you are agreeing to those rules.

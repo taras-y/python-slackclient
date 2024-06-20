@@ -17,7 +17,7 @@ from slack.web.deprecation import show_2020_01_deprecation
 
 
 class AsyncBaseClient:
-    BASE_URL = "https://www.slack.com/api/"
+    BASE_URL = "https://slack.com/api/"
 
     def __init__(
         self,
@@ -38,12 +38,10 @@ class AsyncBaseClient:
         self.ssl = ssl
         self.proxy = proxy
         self.session = session
-        # https://github.com/slackapi/python-slackclient/issues/738
+        # https://github.com/slackapi/python-slack-sdk/issues/738
         self.trust_env_in_session = trust_env_in_session
         self.headers = headers or {}
-        self.headers["User-Agent"] = get_user_agent(
-            user_agent_prefix, user_agent_suffix
-        )
+        self.headers["User-Agent"] = get_user_agent(user_agent_prefix, user_agent_suffix)
         self._logger = logging.getLogger(__name__)
 
     async def api_call(  # skipcq: PYL-R1710
@@ -111,12 +109,12 @@ class AsyncBaseClient:
         show_2020_01_deprecation(api_method)
 
         return await self._send(
-            http_verb=http_verb, api_url=api_url, req_args=req_args,
+            http_verb=http_verb,
+            api_url=api_url,
+            req_args=req_args,
         )
 
-    async def _send(
-        self, http_verb: str, api_url: str, req_args: dict
-    ) -> AsyncSlackResponse:
+    async def _send(self, http_verb: str, api_url: str, req_args: dict) -> AsyncSlackResponse:
         """Sends the request out for transmission.
 
         Args:
@@ -139,9 +137,7 @@ class AsyncBaseClient:
                 # True/False -> "1"/"0"
                 req_args["params"] = convert_bool_to_0_or_1(req_args["params"])
 
-            res = await self._request(
-                http_verb=http_verb, api_url=api_url, req_args=req_args
-            )
+            res = await self._request(http_verb=http_verb, api_url=api_url, req_args=req_args)
         finally:
             for f in open_files:
                 f.close()

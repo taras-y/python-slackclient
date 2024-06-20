@@ -1,17 +1,16 @@
-import asyncio
+from tests.helpers import async_test
 import unittest
-
-import aiohttp
 
 from slack.web.classes.attachments import Attachment, AttachmentField
 from slack.web.classes.blocks import SectionBlock, ImageBlock
 from slack.webhook import AsyncWebhookClient, WebhookResponse
-from tests.helpers import async_test
-from tests.webhook.mock_web_api_server import cleanup_mock_web_api_server, setup_mock_web_api_server
+from tests.webhook.mock_web_api_server import (
+    cleanup_mock_web_api_server,
+    setup_mock_web_api_server,
+)
 
 
 class TestAsyncWebhook(unittest.TestCase):
-
     def setUp(self):
         setup_mock_web_api_server(self)
 
@@ -30,6 +29,17 @@ class TestAsyncWebhook(unittest.TestCase):
         self.assertEqual("ok", resp.body)
 
     @async_test
+    async def test_send_with_url_unfurl_opts_issue_1045(self):
+        client = AsyncWebhookClient("http://localhost:8888")
+        resp: WebhookResponse = await client.send(
+            text="<https://imgs.xkcd.com/comics/1991_and_2021_2x.png|XKCD>",
+            unfurl_links=False,
+            unfurl_media=False,
+        )
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual("ok", resp.body)
+
+    @async_test
     async def test_send_blocks(self):
         client = AsyncWebhookClient("http://localhost:8888")
 
@@ -38,8 +48,8 @@ class TestAsyncWebhook(unittest.TestCase):
             response_type="ephemeral",
             blocks=[
                 SectionBlock(text="Some text"),
-                ImageBlock(image_url="image.jpg", alt_text="an image")
-            ]
+                ImageBlock(image_url="image.jpg", alt_text="an image"),
+            ],
         )
         self.assertEqual("ok", resp.body)
 
@@ -51,28 +61,23 @@ class TestAsyncWebhook(unittest.TestCase):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "This is a mrkdwn section block :ghost: *this is bold*, and ~this is crossed out~, and <https://google.com|this is a link>"
-                    }
+                        "text": "This is a mrkdwn section block :ghost: *this is bold*, and ~this is crossed out~, and <https://google.com|this is a link>",
+                    },
                 },
-                {
-                    "type": "divider"
-                },
+                {"type": "divider"},
                 {
                     "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Pick a date for the deadline."
-                    },
+                    "text": {"type": "mrkdwn", "text": "Pick a date for the deadline."},
                     "accessory": {
                         "type": "datepicker",
                         "initial_date": "1990-04-28",
                         "placeholder": {
                             "type": "plain_text",
                             "text": "Select a date",
-                        }
-                    }
-                }
-            ]
+                        },
+                    },
+                },
+            ],
         )
         self.assertEqual("ok", resp.body)
 
@@ -81,8 +86,8 @@ class TestAsyncWebhook(unittest.TestCase):
             response_type="ephemeral",
             blocks=[
                 SectionBlock(text="Some text"),
-                ImageBlock(image_url="image.jpg", alt_text="an image")
-            ]
+                ImageBlock(image_url="image.jpg", alt_text="an image"),
+            ],
         )
         self.assertEqual("ok", resp.body)
 
@@ -101,17 +106,15 @@ class TestAsyncWebhook(unittest.TestCase):
                             "type": "section",
                             "text": {
                                 "type": "mrkdwn",
-                                "text": "This is a mrkdwn section block :ghost: *this is bold*, and ~this is crossed out~, and <https://google.com|this is a link>"
-                            }
+                                "text": "This is a mrkdwn section block :ghost: *this is bold*, and ~this is crossed out~, and <https://google.com|this is a link>",
+                            },
                         },
-                        {
-                            "type": "divider"
-                        },
+                        {"type": "divider"},
                         {
                             "type": "section",
                             "text": {
                                 "type": "mrkdwn",
-                                "text": "Pick a date for the deadline."
+                                "text": "Pick a date for the deadline.",
                             },
                             "accessory": {
                                 "type": "datepicker",
@@ -119,12 +122,12 @@ class TestAsyncWebhook(unittest.TestCase):
                                 "placeholder": {
                                     "type": "plain_text",
                                     "text": "Select a date",
-                                }
-                            }
-                        }
-                    ]
+                                },
+                            },
+                        },
+                    ],
                 }
-            ]
+            ],
         )
         self.assertEqual("ok", resp.body)
 
@@ -138,10 +141,7 @@ class TestAsyncWebhook(unittest.TestCase):
                     fallback="fallback_text",
                     pretext="some_pretext",
                     title_link="link in title",
-                    fields=[
-                        AttachmentField(title=f"field_{i}_title", value=f"field_{i}_value")
-                        for i in range(5)
-                    ],
+                    fields=[AttachmentField(title=f"field_{i}_title", value=f"field_{i}_value") for i in range(5)],
                     color="#FFFF00",
                     author_name="John Doe",
                     author_link="http://johndoeisthebest.com",
@@ -152,7 +152,7 @@ class TestAsyncWebhook(unittest.TestCase):
                     ts=123456789,
                     markdown_in=["fields"],
                 )
-            ]
+            ],
         )
         self.assertEqual("ok", resp.body)
 

@@ -5,11 +5,13 @@ import unittest
 import slack.errors as err
 from slack import AsyncWebClient
 from tests.helpers import async_test
-from tests.web.mock_web_api_server import setup_mock_web_api_server, cleanup_mock_web_api_server
+from tests.web.mock_web_api_server import (
+    setup_mock_web_api_server,
+    cleanup_mock_web_api_server,
+)
 
 
 class TestAsyncWebClient(unittest.TestCase):
-
     def setUp(self):
         setup_mock_web_api_server(self)
         self.client = AsyncWebClient(
@@ -62,13 +64,14 @@ class TestAsyncWebClient(unittest.TestCase):
 
     @async_test
     async def test_slack_api_rate_limiting_exception_returns_retry_after(self):
-        self.client.token = "xoxb-rate_limited"
+        self.client.token = "xoxb-ratelimited"
         try:
             await self.client.api_test()
         except err.SlackApiError as slack_api_error:
             self.assertFalse(slack_api_error.response["ok"])
             self.assertEqual(429, slack_api_error.response.status_code)
-            self.assertEqual(30, int(slack_api_error.response.headers["Retry-After"]))
+            self.assertEqual(1, int(slack_api_error.response.headers["retry-after"]))
+            self.assertEqual(1, int(slack_api_error.response.headers["Retry-After"]))
 
     @async_test
     async def test_the_api_call_files_argument_creates_the_expected_data(self):
@@ -127,8 +130,11 @@ class TestAsyncWebClient(unittest.TestCase):
             await self.client.users_list(token="xoxb-html_response")
             self.fail("SlackApiError expected here")
         except err.SlackApiError as e:
-            self.assertTrue(
-                str(e).startswith("Failed to parse the response body: Expecting value: line 1 column 1 (char 0)"), e)
+            self.assertEqual(
+                "The request to the Slack API failed. (url: http://localhost:8888/users.list, status: 404)\n"
+                "The server responded with: {}",
+                str(e),
+            )
 
     @async_test
     async def test_user_agent_customization_issue_769_async(self):
@@ -144,7 +150,7 @@ class TestAsyncWebClient(unittest.TestCase):
     @async_test
     async def test_issue_809_filename_for_IOBase(self):
         self.client.token = "xoxb-api_test"
-        file = io.BytesIO(b'here is my data but not sure what is wrong.......')
+        file = io.BytesIO(b"here is my data but not sure what is wrong.......")
         resp = await self.client.files_upload(file=file)
         self.assertIsNone(resp["error"])
         #         if file:

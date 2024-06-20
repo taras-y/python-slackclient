@@ -6,17 +6,19 @@ import unittest
 
 import pytest
 
-from integration_tests.env_variable_names import \
-    SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN, \
-    SLACK_SDK_TEST_RTM_TEST_CHANNEL_ID
+from integration_tests.env_variable_names import (
+    SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN,
+    SLACK_SDK_TEST_RTM_TEST_CHANNEL_ID,
+)
 from integration_tests.helpers import async_test, is_not_specified
-from slack import RTMClient, WebClient
+from slack_sdk.rtm import RTMClient
+from slack_sdk.web import WebClient
 
 
 class TestRTMClient(unittest.TestCase):
     """Runs integration tests with real Slack API
 
-    https://github.com/slackapi/python-slackclient/issues/558
+    https://github.com/slackapi/python-slack-sdk/issues/558
     """
 
     def setUp(self):
@@ -45,8 +47,8 @@ class TestRTMClient(unittest.TestCase):
             self.reaction_count += 1
 
         rtm = RTMClient(token=self.bot_token, run_async=True)
-        RTMClient.on(event='message', callback=process_messages)
-        RTMClient.on(event='reaction_added', callback=process_reactions)
+        RTMClient.on(event="message", callback=process_messages)
+        RTMClient.on(event="reaction_added", callback=process_reactions)
 
         web_client = WebClient(token=self.bot_token, run_async=True)
         message = await web_client.chat_postMessage(channel=channel_id, text=text)

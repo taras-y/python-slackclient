@@ -32,7 +32,7 @@ def _get_url(base_url: str, api_method: str) -> str:
 
     Returns:
         The absolute API URL.
-            e.g. 'https://www.slack.com/api/chat.postMessage'
+            e.g. 'https://slack.com/api/chat.postMessage'
     """
     return urljoin(base_url, api_method)
 
@@ -60,10 +60,9 @@ def _get_headers(
             }
     """
     final_headers = {
+        "User-Agent": get_user_agent(),
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    if headers is None or "User-Agent" not in headers:
-        final_headers["User-Agent"] = get_user_agent()
 
     if token:
         final_headers.update({"Authorization": "Bearer {}".format(token)})
@@ -184,9 +183,7 @@ async def _request_with_session(
             try:
                 data = await res.json()
             except aiohttp.ContentTypeError:
-                logger.debug(
-                    f"No response data returned from the following API call: {api_url}."
-                )
+                logger.debug(f"No response data returned from the following API call: {api_url}.")
             except json.decoder.JSONDecodeError as e:
                 message = f"Failed to parse the response body: {str(e)}"
                 raise SlackApiError(message, res)

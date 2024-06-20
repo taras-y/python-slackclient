@@ -3,15 +3,16 @@ import time
 import unittest
 from uuid import uuid4
 
-from integration_tests.env_variable_names import \
-    SLACK_SDK_TEST_BOT_TOKEN, \
-    SLACK_SDK_TEST_WEB_TEST_CHANNEL_ID
-from slack import WebClient
+from integration_tests.env_variable_names import (
+    SLACK_SDK_TEST_BOT_TOKEN,
+    SLACK_SDK_TEST_WEB_TEST_CHANNEL_ID,
+)
+from slack_sdk.web import WebClient
 
 
 class TestWebClient(unittest.TestCase):
     """
-    Suggestion for https://github.com/slackapi/python-slackclient/issues/762
+    Suggestion for https://github.com/slackapi/python-slack-sdk/issues/762
     """
 
     def setUp(self):
@@ -22,7 +23,7 @@ class TestWebClient(unittest.TestCase):
         pass
 
     def test_replacing_remote_file_blocks_in_a_message(self):
-        client: WebClient = WebClient(token=self.bot_token, run_async=False)
+        client: WebClient = WebClient(token=self.bot_token)
         current_dir = os.path.dirname(__file__)
         url = "https://www.example.com/slack-logo"
 
@@ -31,7 +32,8 @@ class TestWebClient(unittest.TestCase):
             external_id=external_id,
             external_url=url,
             title="Slack Logo",
-            preview_image=f"{current_dir}/../../tests/data/slack_logo.png"
+            indexable_file_contents="so many keywords!".encode("utf-8"),
+            preview_image=f"{current_dir}/../../tests/data/slack_logo.png",
         )
         self.assertIsNotNone(remote_file_creation)
 
@@ -41,16 +43,13 @@ class TestWebClient(unittest.TestCase):
             blocks=[
                 {
                     "type": "section",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "This is v1"
-                    }
+                    "text": {"type": "plain_text", "text": "This is v1"},
                 },
                 {
                     "type": "file",
                     "external_id": external_id,
                     "source": "remote",
-                }
+                },
             ],
         )
         self.assertIsNotNone(new_message)
@@ -63,7 +62,8 @@ class TestWebClient(unittest.TestCase):
             external_id=external_id,
             external_url=url,
             title="Slack Logo",
-            preview_image=f"{current_dir}/../../tests/data/slack_logo_new.png"
+            indexable_file_contents="more and more keywords!".encode("utf-8"),
+            preview_image=f"{current_dir}/../../tests/data/slack_logo_new.png",
         )
         self.assertIsNotNone(new_version)
 
@@ -76,16 +76,13 @@ class TestWebClient(unittest.TestCase):
             blocks=[
                 {
                     "type": "section",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "This is v2"
-                    }
+                    "text": {"type": "plain_text", "text": "This is v2"},
                 },
                 {
                     "type": "file",
                     "external_id": external_id,
                     "source": "remote",
-                }
+                },
             ],
         )
         self.assertIsNotNone(modification)

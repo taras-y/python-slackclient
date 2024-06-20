@@ -10,13 +10,14 @@ import pytest
 
 from integration_tests.env_variable_names import SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN
 from integration_tests.helpers import async_test, is_not_specified
-from slack import RTMClient, WebClient
+from slack_sdk.rtm import RTMClient
+from slack_sdk.web import WebClient
 
 
 class TestRTMClient(unittest.TestCase):
     """Runs integration tests with real Slack API
 
-    https://github.com/slackapi/python-slackclient/issues/701
+    https://github.com/slackapi/python-slack-sdk/issues/701
     """
 
     def setUp(self):
@@ -47,7 +48,7 @@ class TestRTMClient(unittest.TestCase):
             self.rtm_client.start()
 
         rtm = threading.Thread(target=connect)
-        rtm.setDaemon(True)
+        rtm.daemon = True
 
         rtm.start()
         time.sleep(3)
@@ -67,7 +68,7 @@ class TestRTMClient(unittest.TestCase):
         senders = []
         for sender_num in range(num_of_senders):
             sender = threading.Thread(target=sent_bulk_message)
-            sender.setDaemon(True)
+            sender.daemon = True
             sender.start()
             senders.append(sender)
 
@@ -118,7 +119,7 @@ class TestRTMClient(unittest.TestCase):
         senders = []
         for sender_num in range(num_of_senders):
             sender = threading.Thread(target=sent_bulk_message)
-            sender.setDaemon(True)
+            sender.daemon = True
             sender.start()
             senders.append(sender)
 

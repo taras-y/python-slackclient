@@ -39,17 +39,11 @@ class TestSignatureVerifier(unittest.TestCase):
         self.assertEqual(self.valid_signature, signature)
 
     def test_is_valid_request(self):
-        verifier = SignatureVerifier(
-            signing_secret=self.signing_secret,
-            clock=MockClock()
-        )
+        verifier = SignatureVerifier(signing_secret=self.signing_secret, clock=MockClock())
         self.assertTrue(verifier.is_valid_request(self.body, self.headers))
 
     def test_is_valid_request_body_as_bytes(self):
-        verifier = SignatureVerifier(
-            signing_secret=self.signing_secret,
-            clock=MockClock()
-        )
+        verifier = SignatureVerifier(signing_secret=self.signing_secret, clock=MockClock())
         self.assertTrue(verifier.is_valid_request(self.body.encode("utf-8"), self.headers))
 
     def test_is_valid_request_invalid_body(self):

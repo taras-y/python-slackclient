@@ -9,17 +9,19 @@ import unittest
 
 import pytest
 
-from integration_tests.env_variable_names import \
-    SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN, \
-    SLACK_SDK_TEST_RTM_TEST_CHANNEL_ID
+from integration_tests.env_variable_names import (
+    SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN,
+    SLACK_SDK_TEST_RTM_TEST_CHANNEL_ID,
+)
 from integration_tests.helpers import async_test, is_not_specified
-from slack import RTMClient, WebClient
+from slack_sdk.rtm import RTMClient
+from slack_sdk.web import WebClient
 
 
 class TestRTMClient(unittest.TestCase):
     """Runs integration tests with real Slack API
 
-    https://github.com/slackapi/python-slackclient/issues/631
+    https://github.com/slackapi/python-slack-sdk/issues/631
     """
 
     def setUp(self):
@@ -74,18 +76,14 @@ class TestRTMClient(unittest.TestCase):
         @RTMClient.run_on(event="message")
         def send_reply(**payload):
             self.logger.debug(payload)
-            data = payload['data']
-            web_client = payload['web_client']
+            data = payload["data"]
+            web_client = payload["web_client"]
 
             try:
                 if "text" in data and self.text in data["text"]:
-                    channel_id = data['channel']
-                    thread_ts = data['ts']
-                    self.success = web_client.chat_postMessage(
-                        channel=channel_id,
-                        text="Thanks!",
-                        thread_ts=thread_ts
-                    )
+                    channel_id = data["channel"]
+                    thread_ts = data["ts"]
+                    self.success = web_client.chat_postMessage(channel=channel_id, text="Thanks!", thread_ts=thread_ts)
             except Exception as e:
                 self.logger.error(traceback.format_exc())
                 raise e
@@ -95,7 +93,7 @@ class TestRTMClient(unittest.TestCase):
             self.rtm_client.start()
 
         t = threading.Thread(target=connect)
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
 
         try:
@@ -112,7 +110,7 @@ class TestRTMClient(unittest.TestCase):
             time.sleep(5)
             self.assertIsNotNone(self.success)
         finally:
-            t.join(.3)
+            t.join(0.3)
 
     # Solution (2) for #631
     @pytest.mark.skipif(condition=is_not_specified(), reason="this is just for reference")
@@ -128,18 +126,14 @@ class TestRTMClient(unittest.TestCase):
         @RTMClient.run_on(event="message")
         async def send_reply(**payload):
             self.logger.debug(payload)
-            data = payload['data']
-            web_client = payload['web_client']
+            data = payload["data"]
+            web_client = payload["web_client"]
 
             try:
                 if "text" in data and self.text in data["text"]:
-                    channel_id = data['channel']
-                    thread_ts = data['ts']
-                    self.success = await web_client.chat_postMessage(
-                        channel=channel_id,
-                        text="Thanks!",
-                        thread_ts=thread_ts
-                    )
+                    channel_id = data["channel"]
+                    thread_ts = data["ts"]
+                    self.success = await web_client.chat_postMessage(channel=channel_id, text="Thanks!", thread_ts=thread_ts)
             except Exception as e:
                 self.logger.error(traceback.format_exc())
                 raise e

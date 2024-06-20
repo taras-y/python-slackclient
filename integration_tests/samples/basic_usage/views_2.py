@@ -1,11 +1,6 @@
-# ------------------
-# Only for running this script here
 import json
 import logging
-import sys
-from os.path import dirname
 
-sys.path.insert(1, f"{dirname(__file__)}/../../..")
 logging.basicConfig(level=logging.DEBUG)
 
 # ---------------------
@@ -14,15 +9,15 @@ logging.basicConfig(level=logging.DEBUG)
 
 import os
 
-from slack import WebClient
-from slack.errors import SlackApiError
-from slack.signature import SignatureVerifier
-from slack.web.classes.blocks import InputBlock
-from slack.web.classes.elements import PlainTextInputElement
-from slack.web.classes.objects import PlainTextObject
-from slack.web.classes.views import View
+from slack_sdk.web import WebClient
+from slack_sdk.errors import SlackApiError
+from slack_sdk.signature import SignatureVerifier
+from slack_sdk.models.blocks import InputBlock, SectionBlock
+from slack_sdk.models.blocks.block_elements import PlainTextInputElement
+from slack_sdk.models.blocks.basic_components import PlainTextObject
+from slack_sdk.models.views import View
 
-client = WebClient(token=os.environ["SLACK_API_TOKEN"])
+client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
 signature_verifier = SignatureVerifier(os.environ["SLACK_SIGNING_SECRET"])
 
 # ---------------------
@@ -30,7 +25,7 @@ signature_verifier = SignatureVerifier(os.environ["SLACK_SIGNING_SECRET"])
 # ---------------------
 
 # pip3 install flask
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 
 app = Flask(__name__)
 
@@ -42,8 +37,7 @@ def slack_app():
 
     if "payload" in request.form:
         payload = json.loads(request.form["payload"])
-        if payload["type"] == "shortcut" \
-            and payload["callback_id"] == "open-modal-shortcut":
+        if payload["type"] == "shortcut" and payload["callback_id"] == "test-shortcut":
             # Open a new modal by a global shortcut
             try:
                 view = View(
@@ -56,9 +50,9 @@ def slack_app():
                         InputBlock(
                             block_id="b-id",
                             label=PlainTextObject(text="Input label"),
-                            element=PlainTextInputElement(action_id="a-id")
+                            element=PlainTextInputElement(action_id="a-id"),
                         )
-                    ]
+                    ],
                 )
                 api_response = client.views_open(
                     trigger_id=payload["trigger_id"],
@@ -69,12 +63,30 @@ def slack_app():
                 code = e.response["error"]
                 return make_response(f"Failed to open a modal due to {code}", 200)
 
-        if payload["type"] == "view_submission" \
-            and payload["view"]["callback_id"] == "modal-id":
+        if payload["type"] == "view_submission" and payload["view"]["callback_id"] == "modal-id":
             # Handle a data submission request from the modal
             submitted_data = payload["view"]["state"]["values"]
             print(submitted_data)  # {'b-id': {'a-id': {'type': 'plain_text_input', 'value': 'your input'}}}
-            return make_response("", 200)
+            return make_response(
+                jsonify(
+                    {
+                        "response_action": "update",
+                        "view": View(
+                            type="modal",
+                            callback_id="modal-id",
+                            title=PlainTextObject(text="Accepted"),
+                            close=PlainTextObject(text="Close"),
+                            blocks=[
+                                SectionBlock(
+                                    block_id="b-id",
+                                    text=PlainTextObject(text="Thanks for submitting the data!"),
+                                )
+                            ],
+                        ).to_dict(),
+                    }
+                ),
+                200,
+            )
 
     return make_response("", 404)
 

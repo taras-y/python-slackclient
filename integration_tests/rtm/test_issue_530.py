@@ -4,13 +4,13 @@ import logging
 import unittest
 
 from integration_tests.helpers import async_test
-from slack import RTMClient
+from slack_sdk.rtm import RTMClient
 
 
 class TestRTMClient(unittest.TestCase):
     """Runs integration tests with real Slack API
 
-    https://github.com/slackapi/python-slackclient/issues/530
+    https://github.com/slackapi/python-slack-sdk/issues/530
     """
 
     def setUp(self):
@@ -27,8 +27,9 @@ class TestRTMClient(unittest.TestCase):
             self.fail("Raising an error here was expected")
         except Exception as e:
             self.assertEqual(
-                "The request to the Slack API failed.\n"
-                "The server responded with: {'ok': False, 'error': 'invalid_auth'}", str(e))
+                "The request to the Slack API failed.\n" "The server responded with: {'ok': False, 'error': 'invalid_auth'}",
+                str(e),
+            )
         finally:
             if not rtm_client._stopped:
                 rtm_client.stop()
@@ -41,8 +42,9 @@ class TestRTMClient(unittest.TestCase):
             self.fail("Raising an error here was expected")
         except Exception as e:
             self.assertEqual(
-                "The request to the Slack API failed.\n"
-                "The server responded with: {'ok': False, 'error': 'invalid_auth'}", str(e))
+                "The request to the Slack API failed.\n" "The server responded with: {'ok': False, 'error': 'invalid_auth'}",
+                str(e),
+            )
         finally:
             if not rtm_client._stopped:
                 rtm_client.stop()

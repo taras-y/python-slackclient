@@ -60,10 +60,7 @@ class NestedObject(JsonObject):
         options: List[Union[dict, KeyValueObject]],
     ):
         self.initial = KeyValueObject(**initial) if isinstance(initial, dict) else initial
-        self.options = [
-            KeyValueObject(**o) if isinstance(o, dict) else o
-            for o in options
-        ]
+        self.options = [KeyValueObject(**o) if isinstance(o, dict) else o for o in options]
 
 
 class JsonObjectTests(unittest.TestCase):
@@ -97,7 +94,10 @@ class JsonObjectTests(unittest.TestCase):
     def test_get_non_null_attributes_nested(self):
         expected = {
             "initial": {"name": "something"},
-            "options": [{"name": "something"}, {"name": "message", "value": "That's great!"}]
+            "options": [
+                {"name": "something"},
+                {"name": "message", "value": "That's great!"},
+            ],
         }
         obj1 = KeyValueObject(name="something", value=None)
         obj2 = KeyValueObject(name="message", value="That's great!")
@@ -128,11 +128,17 @@ class JsonObjectTests(unittest.TestCase):
     def test_get_non_null_attributes_nested_2(self):
         expected = {
             "initial": {"name": "something"},
-            "options": [{"name": "something"}, {"name": "message", "value": "That's great!"}]
+            "options": [
+                {"name": "something"},
+                {"name": "message", "value": "That's great!"},
+            ],
         }
         nested = NestedObject(
             initial={"name": "something"},
-            options=[{"name": "something"}, {"name": "message", "value": "That's great!"}]
+            options=[
+                {"name": "something"},
+                {"name": "message", "value": "That's great!"},
+            ],
         )
         self.assertDictEqual(expected, nested.get_non_null_attributes())
 
@@ -177,12 +183,8 @@ class DateLinkTests(unittest.TestCase):
         self.epoch = 1234567890
 
     def test_simple_formation(self):
-        datelink = DateLink(
-            date=self.epoch, date_format="{date_long}", fallback=f"{self.epoch}"
-        )
-        self.assertEqual(
-            f"{datelink}", f"<!date^{self.epoch}^{{date_long}}|{self.epoch}>"
-        )
+        datelink = DateLink(date=self.epoch, date_format="{date_long}", fallback=f"{self.epoch}")
+        self.assertEqual(f"{datelink}", f"<!date^{self.epoch}^{{date_long}}|{self.epoch}>")
 
     def test_with_url(self):
         datelink = DateLink(
@@ -244,10 +246,7 @@ class PlainTextObjectTests(unittest.TestCase):
 
     def test_from_string(self):
         plaintext = PlainTextObject(text="some text", emoji=True)
-        self.assertDictEqual(
-            plaintext.to_dict(),
-            PlainTextObject.direct_from_string("some text")
-        )
+        self.assertDictEqual(plaintext.to_dict(), PlainTextObject.direct_from_string("some text"))
 
 
 class MarkdownTextObjectTests(unittest.TestCase):
@@ -264,10 +263,7 @@ class MarkdownTextObjectTests(unittest.TestCase):
 
     def test_from_string(self):
         markdown = MarkdownTextObject(text="some text")
-        self.assertDictEqual(
-            markdown.to_dict(),
-            MarkdownTextObject.direct_from_string("some text")
-        )
+        self.assertDictEqual(markdown.to_dict(), MarkdownTextObject.direct_from_string("some text"))
 
 
 class ConfirmObjectTests(unittest.TestCase):
@@ -358,15 +354,11 @@ class ConfirmObjectTests(unittest.TestCase):
 
     def test_confirm_length(self):
         with self.assertRaises(SlackObjectFormationError):
-            ConfirmObject(
-                title="title", text="Are you sure?", confirm=STRING_51_CHARS
-            ).to_dict()
+            ConfirmObject(title="title", text="Are you sure?", confirm=STRING_51_CHARS).to_dict()
 
     def test_deny_length(self):
         with self.assertRaises(SlackObjectFormationError):
-            ConfirmObject(
-                title="title", text="Are you sure?", deny=STRING_51_CHARS
-            ).to_dict()
+            ConfirmObject(title="title", text="Are you sure?", deny=STRING_51_CHARS).to_dict()
 
 
 class OptionTests(unittest.TestCase):
@@ -466,57 +458,42 @@ class OptionGroupTests(unittest.TestCase):
 
     def test_label_length(self):
         with self.assertRaises(SlackObjectFormationError):
-            OptionGroup(label=STRING_301_CHARS, options=self.common_options).to_dict(
-                "text"
-            )
+            OptionGroup(label=STRING_301_CHARS, options=self.common_options).to_dict("text")
 
     def test_options_length(self):
         with self.assertRaises(SlackObjectFormationError):
-            OptionGroup(label="option_group", options=self.common_options * 34).to_dict(
-                "text"
-            )
+            OptionGroup(label="option_group", options=self.common_options * 34).to_dict("text")
 
     def test_confirm_style(self):
-        obj = ConfirmObject.parse({
-            "title": {
-                "type": "plain_text",
-                "text": "Are you sure?"
-            },
-            "text": {
-                "type": "mrkdwn",
-                "text": "Wouldn't you prefer a good game of _chess_?"
-            },
-            "confirm": {
-                "type": "plain_text",
-                "text": "Do it"
-            },
-            "deny": {
-                "type": "plain_text",
-                "text": "Stop, I've changed my mind!"
-            },
-            "style": "primary"
-        })
+        obj = ConfirmObject.parse(
+            {
+                "title": {"type": "plain_text", "text": "Are you sure?"},
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Wouldn't you prefer a good game of _chess_?",
+                },
+                "confirm": {"type": "plain_text", "text": "Do it"},
+                "deny": {"type": "plain_text", "text": "Stop, I've changed my mind!"},
+                "style": "primary",
+            }
+        )
         obj.validate_json()
         self.assertEqual("primary", obj.style)
 
     def test_confirm_style_validation(self):
         with self.assertRaises(SlackObjectFormationError):
-            ConfirmObject.parse({
-                "title": {
-                    "type": "plain_text",
-                    "text": "Are you sure?"
-                },
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "Wouldn't you prefer a good game of _chess_?"
-                },
-                "confirm": {
-                    "type": "plain_text",
-                    "text": "Do it"
-                },
-                "deny": {
-                    "type": "plain_text",
-                    "text": "Stop, I've changed my mind!"
-                },
-                "style": "something-wrong"
-            }).validate_json()
+            ConfirmObject.parse(
+                {
+                    "title": {"type": "plain_text", "text": "Are you sure?"},
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Wouldn't you prefer a good game of _chess_?",
+                    },
+                    "confirm": {"type": "plain_text", "text": "Do it"},
+                    "deny": {
+                        "type": "plain_text",
+                        "text": "Stop, I've changed my mind!",
+                    },
+                    "style": "something-wrong",
+                }
+            ).validate_json()

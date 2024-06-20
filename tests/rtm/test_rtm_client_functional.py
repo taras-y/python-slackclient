@@ -7,7 +7,10 @@ from aiohttp import web, WSCloseCode
 import slack
 import slack.errors as e
 from tests.helpers import async_test
-from tests.rtm.mock_web_api_server import setup_mock_web_api_server, cleanup_mock_web_api_server
+from tests.rtm.mock_web_api_server import (
+    setup_mock_web_api_server,
+    cleanup_mock_web_api_server,
+)
 
 
 class TestRTMClientFunctional(unittest.TestCase):

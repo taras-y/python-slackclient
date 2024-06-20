@@ -9,17 +9,20 @@ import unittest
 import psutil
 import pytest
 
-from integration_tests.env_variable_names import \
-    SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN, \
-    SLACK_SDK_TEST_RTM_TEST_CHANNEL_ID
+from integration_tests.env_variable_names import (
+    SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN,
+    SLACK_SDK_TEST_RTM_TEST_CHANNEL_ID,
+)
 from integration_tests.helpers import async_test, is_not_specified
-from slack import RTMClient, WebClient
+from slack_sdk.rtm import RTMClient
+from slack_sdk.web import WebClient
+from slack_sdk.web.legacy_client import LegacyWebClient
 
 
 class TestRTMClient(unittest.TestCase):
     """Runs integration tests with real Slack API
 
-    https://github.com/slackapi/python-slackclient/issues/569
+    https://github.com/slackapi/python-slack-sdk/issues/569
     """
 
     def setUp(self):
@@ -29,6 +32,7 @@ class TestRTMClient(unittest.TestCase):
             self.bot_token = os.environ[SLACK_SDK_TEST_CLASSIC_APP_BOT_TOKEN]
 
         if not hasattr(self, "cpu_monitor") or not TestRTMClient.cpu_monitor.is_alive():
+
             def run_cpu_monitor(self):
                 self.logger.debug("Starting CPU monitor in another thread...")
                 TestRTMClient.cpu_usage = 0
@@ -40,7 +44,7 @@ class TestRTMClient(unittest.TestCase):
                         TestRTMClient.cpu_usage = current_cpu_usage
 
             TestRTMClient.cpu_monitor = threading.Thread(target=run_cpu_monitor, args=[self])
-            TestRTMClient.cpu_monitor.setDaemon(True)
+            TestRTMClient.cpu_monitor.daemon = True
             TestRTMClient.cpu_monitor.start()
 
         self.rtm_client = None
@@ -56,7 +60,7 @@ class TestRTMClient(unittest.TestCase):
     @pytest.mark.skipif(condition=is_not_specified(), reason="To avoid rate_limited errors")
     def test_cpu_usage(self):
         self.rtm_client = RTMClient(token=self.bot_token, run_async=False, loop=asyncio.new_event_loop())
-        self.web_client = WebClient(token=self.bot_token, run_async=False)
+        self.web_client = WebClient(token=self.bot_token)
 
         self.call_count = 0
         TestRTMClient.cpu_usage = 0
@@ -71,7 +75,7 @@ class TestRTMClient(unittest.TestCase):
                     for i in range(0, 3):
                         new_message = web_client.chat_postMessage(
                             channel=event["channel"],
-                            text=f"Current CPU usage: {TestRTMClient.cpu_usage} % (test_cpu_usage)"
+                            text=f"Current CPU usage: {TestRTMClient.cpu_usage} % (test_cpu_usage)",
                         )
                         self.logger.debug(new_message)
                         self.call_count += 1
@@ -81,7 +85,7 @@ class TestRTMClient(unittest.TestCase):
             self.rtm_client.start()
 
         rtm = threading.Thread(target=connect)
-        rtm.setDaemon(True)
+        rtm.daemon = True
 
         rtm.start()
         time.sleep(5)
@@ -102,7 +106,7 @@ class TestRTMClient(unittest.TestCase):
     @async_test
     async def test_cpu_usage_async(self):
         self.rtm_client = RTMClient(token=self.bot_token, run_async=True)
-        self.web_client = WebClient(token=self.bot_token, run_async=True)
+        self.web_client = LegacyWebClient(token=self.bot_token, run_async=True)
 
         self.call_count = 0
         TestRTMClient.cpu_usage = 0
@@ -117,7 +121,7 @@ class TestRTMClient(unittest.TestCase):
                     for i in range(0, 3):
                         new_message = await web_client.chat_postMessage(
                             channel=event["channel"],
-                            text=f"Current CPU usage: {TestRTMClient.cpu_usage} % (test_cpu_usage_async)"
+                            text=f"Current CPU usage: {TestRTMClient.cpu_usage} % (test_cpu_usage_async)",
                         )
                         self.logger.debug(new_message)
                         self.call_count += 1

@@ -5,12 +5,15 @@ import unittest
 
 import pytest
 
-from integration_tests.env_variable_names import \
-    SLACK_SDK_TEST_BOT_TOKEN, \
-    SLACK_SDK_TEST_WEB_TEST_CHANNEL_ID
+from integration_tests.env_variable_names import (
+    SLACK_SDK_TEST_BOT_TOKEN,
+    SLACK_SDK_TEST_WEB_TEST_CHANNEL_ID,
+)
 from integration_tests.helpers import async_test, is_not_specified
-from slack import WebClient
-from slack.web.slack_response import SlackResponse
+from slack_sdk.web import WebClient
+from slack_sdk.web.slack_response import SlackResponse
+from slack_sdk.web.async_client import AsyncWebClient
+from slack_sdk.web.legacy_client import LegacyWebClient
 
 
 class TestWebClient(unittest.TestCase):
@@ -20,12 +23,8 @@ class TestWebClient(unittest.TestCase):
         if not hasattr(self, "logger"):
             self.logger = logging.getLogger(__name__)
             self.bot_token = os.environ[SLACK_SDK_TEST_BOT_TOKEN]
-            self.async_client: WebClient = WebClient(token=self.bot_token, run_async=True)
-            self.sync_client: WebClient = WebClient(
-                token=self.bot_token,
-                run_async=False,
-                loop=asyncio.new_event_loop(),  # TODO: remove this
-            )
+            self.async_client: AsyncWebClient = AsyncWebClient(token=self.bot_token)
+            self.sync_client: WebClient = WebClient(token=self.bot_token)
             self.channel_id = os.environ[SLACK_SDK_TEST_WEB_TEST_CHANNEL_ID]
 
     def tearDown(self):
@@ -89,18 +88,23 @@ class TestWebClient(unittest.TestCase):
 
         auth = client.auth_test()
         self.assertIsNotNone(auth)
-        subdomain = auth["team"]
+        url = auth["url"]
 
         channel = self.channel_id
-        message = "This message was posted by <https://slack.dev/python-slackclient/|python-slackclient>! " + \
-                  "(integration_tests/test_web_client.py #test_chat_operations)"
+        message = (
+            "This message was posted by <https://slack.dev/python-slackclient/|python-slackclient>! "
+            + "(integration_tests/test_web_client.py #test_chat_operations)"
+        )
         new_message: SlackResponse = client.chat_postMessage(channel=channel, text=message)
         self.assertEqual(new_message["message"]["text"], message)
         ts = new_message["ts"]
 
         permalink = client.chat_getPermalink(channel=channel, message_ts=ts)
         self.assertIsNotNone(permalink)
-        self.assertRegex(permalink["permalink"], f"https://{subdomain}.slack.com/archives/{channel}/.+")
+        self.assertRegex(
+            permalink["permalink"],
+            f"{url}archives/{channel}/.+",
+        )
 
         new_reaction = client.reactions_add(channel=channel, timestamp=ts, name="eyes")
         self.assertIsNotNone(new_reaction)
@@ -128,18 +132,23 @@ class TestWebClient(unittest.TestCase):
 
         auth = await client.auth_test()
         self.assertIsNotNone(auth)
-        subdomain = auth["team"]
+        url = auth["url"]
 
         channel = self.channel_id
-        message = "This message was posted by <https://slack.dev/python-slackclient/|python-slackclient>! " + \
-                  "(integration_tests/test_web_client.py #test_chat_operations)"
+        message = (
+            "This message was posted by <https://slack.dev/python-slackclient/|python-slackclient>! "
+            + "(integration_tests/test_web_client.py #test_chat_operations)"
+        )
         new_message: SlackResponse = await client.chat_postMessage(channel=channel, text=message)
         self.assertEqual(new_message["message"]["text"], message)
         ts = new_message["ts"]
 
         permalink = await client.chat_getPermalink(channel=channel, message_ts=ts)
         self.assertIsNotNone(permalink)
-        self.assertRegex(permalink["permalink"], f"https://{subdomain}.slack.com/archives/{channel}/.+")
+        self.assertRegex(
+            permalink["permalink"],
+            f"{url}archives/{channel}/.+",
+        )
 
         new_reaction = await client.reactions_add(channel=channel, timestamp=ts, name="eyes")
         self.assertIsNotNone(new_reaction)
@@ -178,7 +187,11 @@ class TestWebClient(unittest.TestCase):
         client = self.async_client
         file, filename = __file__, os.path.basename(__file__)
         upload = await client.files_upload(
-            channels=self.channel_id, title="Good Old Slack Logo", filename=filename, file=file)
+            channels=self.channel_id,
+            title="Good Old Slack Logo",
+            filename=filename,
+            file=file,
+        )
         self.assertIsNotNone(upload)
 
         deletion = await client.files_delete(file=upload["file"]["id"])
@@ -189,7 +202,11 @@ class TestWebClient(unittest.TestCase):
         current_dir = os.path.dirname(__file__)
         file = f"{current_dir}/../../tests/data/slack_logo.png"
         upload = client.files_upload(
-            channels=self.channel_id, title="Good Old Slack Logo", filename="slack_logo.png", file=file)
+            channels=self.channel_id,
+            title="Good Old Slack Logo",
+            filename="slack_logo.png",
+            file=file,
+        )
         self.assertIsNotNone(upload)
 
         deletion = client.files_delete(file=upload["file"]["id"])
@@ -199,10 +216,14 @@ class TestWebClient(unittest.TestCase):
         client = self.sync_client
         current_dir = os.path.dirname(__file__)
         file = f"{current_dir}/../../tests/data/slack_logo.png"
-        with open(file, 'rb') as f:
+        with open(file, "rb") as f:
             content = f.read()
             upload = client.files_upload(
-                channels=self.channel_id, title="Good Old Slack Logo", filename="slack_logo.png", content=content)
+                channels=self.channel_id,
+                title="Good Old Slack Logo",
+                filename="slack_logo.png",
+                content=content,
+            )
             self.assertIsNotNone(upload)
 
             deletion = client.files_delete(file=upload["file"]["id"])
@@ -214,10 +235,14 @@ class TestWebClient(unittest.TestCase):
         current_dir = os.path.dirname(__file__)
         file = f"{current_dir}/../../tests/data/slack_logo.png"
         upload = await client.files_upload(
-            channels=self.channel_id, title="Good Old Slack Logo", filename="slack_logo.png", file=file)
+            channels=self.channel_id,
+            title="Good Old Slack Logo",
+            filename="slack_logo.png",
+            file=file,
+        )
         self.assertIsNotNone(upload)
 
-        deletion = client.files_delete(file=upload["file"]["id"])
+        deletion = await client.files_delete(file=upload["file"]["id"])
         self.assertIsNotNone(deletion)
 
     def test_uploading_file_with_token_param(self):
@@ -241,7 +266,7 @@ class TestWebClient(unittest.TestCase):
 
     @async_test
     async def test_uploading_file_with_token_param_async(self):
-        client = WebClient(run_async=True)
+        client = AsyncWebClient()
         current_dir = os.path.dirname(__file__)
         file = f"{current_dir}/../../tests/data/slack_logo.png"
         upload = await client.files_upload(
@@ -253,7 +278,7 @@ class TestWebClient(unittest.TestCase):
         )
         self.assertIsNotNone(upload)
 
-        deletion = client.files_delete(
+        deletion = await client.files_delete(
             token=self.bot_token,
             file=upload["file"]["id"],
         )
@@ -274,7 +299,7 @@ class TestWebClient(unittest.TestCase):
         self.assertGreater(fetched_count, 1)
 
     def test_pagination_with_iterator_use_sync_aiohttp(self):
-        client: WebClient = WebClient(
+        client: LegacyWebClient = LegacyWebClient(
             token=self.bot_token,
             run_async=False,
             use_sync_aiohttp=True,

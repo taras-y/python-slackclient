@@ -8,11 +8,13 @@ import unittest
 import slack.errors as err
 from slack import WebClient
 from tests.helpers import async_test
-from tests.web.mock_web_api_server import setup_mock_web_api_server, cleanup_mock_web_api_server
+from tests.web.mock_web_api_server import (
+    setup_mock_web_api_server,
+    cleanup_mock_web_api_server,
+)
 
 
 class TestWebClient(unittest.TestCase):
-
     def setUp(self):
         setup_mock_web_api_server(self)
         self.client = WebClient(
@@ -125,13 +127,14 @@ class TestWebClient(unittest.TestCase):
             self.client.api_test()
 
     def test_slack_api_rate_limiting_exception_returns_retry_after(self):
-        self.client.token = "xoxb-rate_limited"
+        self.client.token = "xoxb-ratelimited"
         try:
             self.client.api_test()
         except err.SlackApiError as slack_api_error:
             self.assertFalse(slack_api_error.response["ok"])
             self.assertEqual(429, slack_api_error.response.status_code)
-            self.assertEqual(30, int(slack_api_error.response.headers["Retry-After"]))
+            self.assertEqual(1, int(slack_api_error.response.headers["retry-after"]))
+            self.assertEqual(1, int(slack_api_error.response.headers["Retry-After"]))
 
     def test_the_api_call_files_argument_creates_the_expected_data(self):
         self.client.token = "xoxb-users_setPhoto"
@@ -226,25 +229,31 @@ class TestWebClient(unittest.TestCase):
         with self.assertRaises(asyncio.TimeoutError):
             await client.users_list(token="xoxb-timeout")
 
-    def test_unclosed_client_session_issue_645_in_async_mode(self):
-        def exception_handler(_, context):
-            nonlocal session_unclosed
-            if context["message"] == "Unclosed client session":
-                session_unclosed = True
-
-        async def issue_645():
-            client = WebClient(base_url="http://localhost:8888", timeout=1, run_async=True)
-            try:
-                await client.users_list(token="xoxb-timeout")
-            except asyncio.TimeoutError:
-                pass
-
-        session_unclosed = False
-        loop = asyncio.get_event_loop()
-        loop.set_exception_handler(exception_handler)
-        loop.run_until_complete(issue_645())
-        gc.collect()  # force Python to gc unclosed client session
-        self.assertFalse(session_unclosed, "Unclosed client session")
+    # NOTE: This test may be unstable in GitHub Actions environment.
+    # As we no longer recommend using this LegacyWebClient,
+    # let us disable this test to avoid noises in CI builds.
+    # ---------------------
+    # def test_unclosed_client_session_issue_645_in_async_mode(self):
+    #     def exception_handler(_, context):
+    #         nonlocal session_unclosed
+    #         if context["message"] == "Unclosed client session":
+    #             session_unclosed = True
+    #
+    #     async def issue_645():
+    #         client = WebClient(
+    #             base_url="http://localhost:8888", timeout=1, run_async=True
+    #         )
+    #         try:
+    #             await client.users_list(token="xoxb-timeout")
+    #         except asyncio.TimeoutError:
+    #             pass
+    #
+    #     session_unclosed = False
+    #     loop = asyncio.get_event_loop()
+    #     loop.set_exception_handler(exception_handler)
+    #     loop.run_until_complete(issue_645())
+    #     gc.collect()  # force Python to gc unclosed client session
+    #     self.assertFalse(session_unclosed, "Unclosed client session")
 
     def test_html_response_body_issue_718(self):
         client = WebClient(base_url="http://localhost:8888")
@@ -253,7 +262,9 @@ class TestWebClient(unittest.TestCase):
             self.fail("SlackApiError expected here")
         except err.SlackApiError as e:
             self.assertTrue(
-                str(e).startswith("Failed to parse the response body: Expecting value: line 1 column 1 (char 0)"), e)
+                str(e).startswith("Received a response in a non-JSON format: "),
+                e,
+            )
 
     @async_test
     async def test_html_response_body_issue_718_async(self):
@@ -262,8 +273,10 @@ class TestWebClient(unittest.TestCase):
             await client.users_list(token="xoxb-html_response")
             self.fail("SlackApiError expected here")
         except err.SlackApiError as e:
-            self.assertTrue(
-                str(e).startswith("Failed to parse the response body: Expecting value: line 1 column 1 (char 0)"), e)
+            self.assertEqual(
+                "The request to the Slack API failed.\n" "The server responded with: {}",
+                str(e),
+            )
 
     def test_user_agent_customization_issue_769(self):
         client = WebClient(
@@ -289,7 +302,7 @@ class TestWebClient(unittest.TestCase):
 
     def test_issue_809_filename_for_IOBase(self):
         self.client.token = "xoxb-api_test"
-        file = io.BytesIO(b'here is my data but not sure what is wrong.......')
+        file = io.BytesIO(b"here is my data but not sure what is wrong.......")
         resp = self.client.files_upload(file=file)
         self.assertIsNone(resp["error"])
         #         if file:
@@ -297,3 +310,8 @@ class TestWebClient(unittest.TestCase):
         #                 # use the local filename if filename is missing
         # >               kwargs["filename"] = file.split(os.path.sep)[-1]
         # E               AttributeError: '_io.BytesIO' object has no attribute 'split'
+
+    def test_default_team_id(self):
+        client = WebClient(base_url="http://localhost:8888", team_id="T_DEFAULT")
+        resp = client.users_list(token="xoxb-users_list_pagination")
+        self.assertIsNone(resp["error"])

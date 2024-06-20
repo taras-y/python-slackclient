@@ -7,9 +7,19 @@ from slack.web.classes.elements import (
     ExternalDataSelectElement,
     ImageElement,
     LinkButtonElement,
-    UserSelectElement, StaticSelectElement, CheckboxesElement, StaticMultiSelectElement, ExternalDataMultiSelectElement,
-    UserMultiSelectElement, ConversationMultiSelectElement, ChannelMultiSelectElement, OverflowMenuElement,
-    PlainTextInputElement, RadioButtonsElement, ConversationSelectElement, ChannelSelectElement,
+    UserSelectElement,
+    StaticSelectElement,
+    CheckboxesElement,
+    StaticMultiSelectElement,
+    ExternalDataMultiSelectElement,
+    UserMultiSelectElement,
+    ConversationMultiSelectElement,
+    ChannelMultiSelectElement,
+    OverflowMenuElement,
+    PlainTextInputElement,
+    RadioButtonsElement,
+    ConversationSelectElement,
+    ChannelSelectElement,
 )
 from slack.web.classes.objects import ConfirmObject, Option
 from . import STRING_3001_CHARS, STRING_301_CHARS
@@ -18,6 +28,7 @@ from . import STRING_3001_CHARS, STRING_301_CHARS
 # -------------------------------------------------
 # Interactive Elements
 # -------------------------------------------------
+
 
 class InteractiveElementTests(unittest.TestCase):
     def test_action_id(self):
@@ -29,36 +40,27 @@ class ButtonElementTests(unittest.TestCase):
     def test_document_1(self):
         input = {
             "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": "Click Me"
-            },
+            "text": {"type": "plain_text", "text": "Click Me"},
             "value": "click_me_123",
-            "action_id": "button"
+            "action_id": "button",
         }
         self.assertDictEqual(input, ButtonElement(**input).to_dict())
 
     def test_document_2(self):
         input = {
             "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": "Save"
-            },
+            "text": {"type": "plain_text", "text": "Save"},
             "style": "primary",
             "value": "click_me_123",
-            "action_id": "button"
+            "action_id": "button",
         }
         self.assertDictEqual(input, ButtonElement(**input).to_dict())
 
     def test_document_3(self):
         input = {
             "type": "button",
-            "text": {
-                "type": "plain_text",
-                "text": "Link Button"
-            },
-            "url": "https://api.slack.com/block-kit"
+            "text": {"type": "plain_text", "text": "Link Button"},
+            "url": "https://api.slack.com/block-kit",
         }
         self.assertDictEqual(input, ButtonElement(**input).to_dict())
         self.assertDictEqual(input, LinkButtonElement(**input).to_dict())
@@ -128,34 +130,17 @@ class LinkButtonElementTests(unittest.TestCase):
 # Checkboxes
 # -------------------------------------------------
 
+
 class CheckboxesElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "type": "checkboxes",
             "action_id": "this_is_an_action_id",
-            "initial_options": [{
-                "value": "A1",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Checkbox 1"
-                }
-            }],
+            "initial_options": [{"value": "A1", "text": {"type": "plain_text", "text": "Checkbox 1"}}],
             "options": [
-                {
-                    "value": "A1",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Checkbox 1"
-                    }
-                },
-                {
-                    "value": "A2",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Checkbox 2"
-                    }
-                }
-            ]
+                {"value": "A1", "text": {"type": "plain_text", "text": "Checkbox 1"}},
+                {"value": "A2", "text": {"type": "plain_text", "text": "Checkbox 2"}},
+            ],
         }
         self.assertDictEqual(input, CheckboxesElement(**input).to_dict())
 
@@ -164,33 +149,22 @@ class CheckboxesElementTests(unittest.TestCase):
 # DatePicker
 # -------------------------------------------------
 
+
 class DatePickerElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "type": "datepicker",
             "action_id": "datepicker123",
             "initial_date": "1990-04-28",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select a date"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select a date"},
             "confirm": {
-                "title": {
-                    "type": "plain_text",
-                    "text": "Are you sure?"
-                },
+                "title": {"type": "plain_text", "text": "Are you sure?"},
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Wouldn't you prefer a good game of _chess_?"
+                    "text": "Wouldn't you prefer a good game of _chess_?",
                 },
-                "confirm": {
-                    "type": "plain_text",
-                    "text": "Do it"
-                },
-                "deny": {
-                    "type": "plain_text",
-                    "text": "Stop, I've changed my mind!"
-                }
+                "confirm": {"type": "plain_text", "text": "Do it"},
+                "deny": {"type": "plain_text", "text": "Stop, I've changed my mind!"},
             },
         }
         self.assertDictEqual(input, DatePickerElement(**input).to_dict())
@@ -218,12 +192,12 @@ class DatePickerElementTests(unittest.TestCase):
                 )
 
     def test_issue_623(self):
-        elem = DatePickerElement(action_id='1', placeholder=None)
-        elem.to_dict() # no exception
-        elem = DatePickerElement(action_id='1')
-        elem.to_dict() # no exception
+        elem = DatePickerElement(action_id="1", placeholder=None)
+        elem.to_dict()  # no exception
+        elem = DatePickerElement(action_id="1")
+        elem.to_dict()  # no exception
         with self.assertRaises(SlackObjectFormationError):
-            elem = DatePickerElement(action_id='1', placeholder="12345" * 100)
+            elem = DatePickerElement(action_id="1", placeholder="12345" * 100)
             elem.to_dict()
 
 
@@ -231,12 +205,13 @@ class DatePickerElementTests(unittest.TestCase):
 # Image
 # -------------------------------------------------
 
+
 class ImageElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "type": "image",
             "image_url": "http://placekitten.com/700/500",
-            "alt_text": "Multiple cute kittens"
+            "alt_text": "Multiple cute kittens",
         }
         self.assertDictEqual(input, ImageElement(**input).to_dict())
 
@@ -263,6 +238,7 @@ class ImageElementTests(unittest.TestCase):
 # Static Select
 # -------------------------------------------------
 
+
 class StaticMultiSelectElementTests(unittest.TestCase):
     maxDiff = None
 
@@ -270,32 +246,20 @@ class StaticMultiSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "multi_static_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select items"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select items"},
             "options": [
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-0"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-0",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-1"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-1",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-2"
-                }
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-2",
+                },
             ],
             "max_selected_items": 1,
         }
@@ -309,33 +273,21 @@ class StaticSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "static_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
             "options": [
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-0"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-0",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-1"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-1",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-2"
-                }
-            ]
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-2",
+                },
+            ],
         }
         self.assertDictEqual(input, StaticSelectElement(**input).to_dict())
 
@@ -343,56 +295,47 @@ class StaticSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "static_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
             "option_groups": [
                 {
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Group 1"
-                    },
+                    "label": {"type": "plain_text", "text": "Group 1"},
                     "options": [
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": "*this is plain_text text*"
+                                "text": "*this is plain_text text*",
                             },
-                            "value": "value-0"
+                            "value": "value-0",
                         },
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": "*this is plain_text text*"
+                                "text": "*this is plain_text text*",
                             },
-                            "value": "value-1"
+                            "value": "value-1",
                         },
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": "*this is plain_text text*"
+                                "text": "*this is plain_text text*",
                             },
-                            "value": "value-2"
-                        }
-                    ]
+                            "value": "value-2",
+                        },
+                    ],
                 },
                 {
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Group 2"
-                    },
+                    "label": {"type": "plain_text", "text": "Group 2"},
                     "options": [
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": "*this is plain_text text*"
+                                "text": "*this is plain_text text*",
                             },
-                            "value": "value-3"
+                            "value": "value-3",
                         }
-                    ]
-                }
-            ]
+                    ],
+                },
+            ],
         }
         self.assertDictEqual(input, StaticSelectElement(**input).to_dict())
 
@@ -458,6 +401,7 @@ class StaticSelectElementTests(unittest.TestCase):
 # External Data Source Select
 # -------------------------------------------------
 
+
 class ExternalDataMultiSelectElementTests(unittest.TestCase):
     maxDiff = None
 
@@ -465,11 +409,8 @@ class ExternalDataMultiSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "multi_external_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select items"
-            },
-            "min_query_length": 3
+            "placeholder": {"type": "plain_text", "text": "Select items"},
+            "min_query_length": 3,
         }
         self.assertDictEqual(input, ExternalDataMultiSelectElement(**input).to_dict())
 
@@ -477,17 +418,11 @@ class ExternalDataMultiSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "multi_external_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select items"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select items"},
             "initial_options": [
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "The default channel"
-                    },
-                    "value": "C1234567890"
+                    "text": {"type": "plain_text", "text": "The default channel"},
+                    "value": "C1234567890",
                 }
             ],
             "min_query_length": 0,
@@ -503,11 +438,8 @@ class ExternalDataSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "external_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
-            "min_query_length": 3
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
+            "min_query_length": 3,
         }
         self.assertDictEqual(input, ExternalDataSelectElement(**input).to_dict())
 
@@ -515,36 +447,21 @@ class ExternalDataSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "external_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
             "initial_option": {
-                "text": {
-                    "type": "plain_text",
-                    "text": "The default channel"
-                },
-                "value": "C1234567890"
+                "text": {"type": "plain_text", "text": "The default channel"},
+                "value": "C1234567890",
             },
             "confirm": {
-                "title": {
-                    "type": "plain_text",
-                    "text": "Are you sure?"
-                },
+                "title": {"type": "plain_text", "text": "Are you sure?"},
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Wouldn't you prefer a good game of _chess_?"
+                    "text": "Wouldn't you prefer a good game of _chess_?",
                 },
-                "confirm": {
-                    "type": "plain_text",
-                    "text": "Do it"
-                },
-                "deny": {
-                    "type": "plain_text",
-                    "text": "Stop, I've changed my mind!"
-                }
+                "confirm": {"type": "plain_text", "text": "Do it"},
+                "deny": {"type": "plain_text", "text": "Stop, I've changed my mind!"},
             },
-            "min_query_length": 3
+            "min_query_length": 3,
         }
         self.assertDictEqual(input, ExternalDataSelectElement(**input).to_dict())
 
@@ -560,11 +477,7 @@ class ExternalDataSelectElementTests(unittest.TestCase):
                 "min_query_length": 5,
                 "type": "external_select",
             },
-            ExternalDataSelectElement(
-                placeholder="selectedValue",
-                action_id="dropdown",
-                min_query_length=5
-            ).to_dict()
+            ExternalDataSelectElement(placeholder="selectedValue", action_id="dropdown", min_query_length=5).to_dict(),
         )
         self.assertDictEqual(
             {
@@ -581,7 +494,7 @@ class ExternalDataSelectElementTests(unittest.TestCase):
                 placeholder="selectedValue",
                 action_id="dropdown",
                 confirm=ConfirmObject(title="title", text="text"),
-            ).to_dict()
+            ).to_dict(),
         )
 
 
@@ -589,17 +502,15 @@ class ExternalDataSelectElementTests(unittest.TestCase):
 # Users Select
 # -------------------------------------------------
 
+
 class UserSelectMultiElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "action_id": "text1234",
             "type": "multi_users_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select users"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select users"},
             "initial_users": ["U123", "U234"],
-            "max_selected_items": 1
+            "max_selected_items": 1,
         }
         self.assertDictEqual(input, UserMultiSelectElement(**input).to_dict())
 
@@ -609,11 +520,8 @@ class UserSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "users_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
-            "initial_user": "U123"
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
+            "initial_user": "U123",
         }
         self.assertDictEqual(input, UserSelectElement(**input).to_dict())
 
@@ -633,7 +541,7 @@ class UserSelectElementTests(unittest.TestCase):
                 placeholder="abc",
                 action_id="a-123",
                 initial_user="U123",
-            ).to_dict()
+            ).to_dict(),
         )
 
 
@@ -641,25 +549,17 @@ class UserSelectElementTests(unittest.TestCase):
 # Conversations Select
 # -------------------------------------------------
 
+
 class ConversationSelectMultiElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "action_id": "text1234",
             "type": "multi_conversations_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select conversations"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select conversations"},
             "initial_conversations": ["C123", "C234"],
             "max_selected_items": 2,
             "default_to_current_conversation": True,
-            "filter": {
-                "include": [
-                    "public",
-                    "mpim"
-                ],
-                "exclude_bot_users": True
-            },
+            "filter": {"include": ["public", "mpim"], "exclude_bot_users": True},
         }
         self.assertDictEqual(input, ConversationMultiSelectElement(**input).to_dict())
 
@@ -669,20 +569,11 @@ class ConversationSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "conversations_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
             "initial_conversation": "C123",
             "response_url_enabled": True,
             "default_to_current_conversation": True,
-            "filter": {
-                "include": [
-                    "public",
-                    "mpim"
-                ],
-                "exclude_bot_users": True
-            },
+            "filter": {"include": ["public", "mpim"], "exclude_bot_users": True},
         }
         self.assertDictEqual(input, ConversationSelectElement(**input).to_dict())
 
@@ -691,15 +582,13 @@ class ConversationSelectElementTests(unittest.TestCase):
 # Channels Select
 # -------------------------------------------------
 
+
 class ChannelSelectMultiElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "action_id": "text1234",
             "type": "multi_channels_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select channels"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select channels"},
             "initial_channels": ["C123", "C234"],
             "max_selected_items": 2,
         }
@@ -711,10 +600,7 @@ class ChannelSelectElementTests(unittest.TestCase):
         input = {
             "action_id": "text1234",
             "type": "channels_select",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Select an item"
-            },
+            "placeholder": {"type": "plain_text", "text": "Select an item"},
             "response_url_enabled": True,
             "initial_channel": "C123",
         }
@@ -725,49 +611,35 @@ class ChannelSelectElementTests(unittest.TestCase):
 # Overflow Menu Select
 # -------------------------------------------------
 
+
 class OverflowMenuElementTests(unittest.TestCase):
     def test_document(self):
         input = {
             "type": "overflow",
             "options": [
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-0"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-0",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-1"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-1",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-2"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-2",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
-                    "value": "value-3"
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
+                    "value": "value-3",
                 },
                 {
-                    "text": {
-                        "type": "plain_text",
-                        "text": "*this is plain_text text*"
-                    },
+                    "text": {"type": "plain_text", "text": "*this is plain_text text*"},
                     # https://api.slack.com/reference/block-kit/composition-objects#option
                     "url": "https://www.example.com",
-                }
+                },
             ],
-            "action_id": "overflow"
+            "action_id": "overflow",
         }
         self.assertDictEqual(input, OverflowMenuElement(**input).to_dict())
 
@@ -776,15 +648,13 @@ class OverflowMenuElementTests(unittest.TestCase):
 # Input
 # -------------------------------------------------
 
+
 class PlainTextInputElementTests(unittest.TestCase):
     def test_document_1(self):
         input = {
             "type": "plain_text_input",
             "action_id": "plain_input",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Enter some plain text"
-            },
+            "placeholder": {"type": "plain_text", "text": "Enter some plain text"},
         }
         self.assertDictEqual(input, PlainTextInputElement(**input).to_dict())
 
@@ -792,14 +662,19 @@ class PlainTextInputElementTests(unittest.TestCase):
         input = {
             "type": "plain_text_input",
             "action_id": "plain_input",
-            "placeholder": {
-                "type": "plain_text",
-                "text": "Enter some plain text"
-            },
+            "placeholder": {"type": "plain_text", "text": "Enter some plain text"},
             "initial_value": "TODO",
             "multiline": True,
             "min_length": 1,
             "max_length": 10,
+        }
+        self.assertDictEqual(input, PlainTextInputElement(**input).to_dict())
+
+    def test_document_3(self):
+        input = {
+            "type": "plain_text_input",
+            "multiline": True,
+            "dispatch_action_config": {"trigger_actions_on": ["on_character_entered"]},
         }
         self.assertDictEqual(input, PlainTextInputElement(**input).to_dict())
 
@@ -808,6 +683,7 @@ class PlainTextInputElementTests(unittest.TestCase):
 # Radio Buttons
 # -------------------------------------------------
 
+
 class RadioButtonsElementTest(unittest.TestCase):
     def test_document(self):
         input = {
@@ -815,33 +691,15 @@ class RadioButtonsElementTest(unittest.TestCase):
             "action_id": "this_is_an_action_id",
             "initial_option": {
                 "value": "A1",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Radio 1"
-                }
+                "text": {"type": "plain_text", "text": "Radio 1"},
             },
             "options": [
-                {
-                    "value": "A1",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Radio 1"
-                    }
-                },
-                {
-                    "value": "A2",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "Radio 2"
-                    }
-                }
+                {"value": "A1", "text": {"type": "plain_text", "text": "Radio 1"}},
+                {"value": "A2", "text": {"type": "plain_text", "text": "Radio 2"}},
             ],
             "initial_option": {
                 "value": "A2",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Radio 2"
-                }
-            }
+                "text": {"type": "plain_text", "text": "Radio 2"},
+            },
         }
         self.assertDictEqual(input, RadioButtonsElement(**input).to_dict())
